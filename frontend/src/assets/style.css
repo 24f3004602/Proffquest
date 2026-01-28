@@ -1,0 +1,171 @@
+/*Login Page*/
+.login{
+    margin: 100px auto;
+    width: 400px ;   
+    border: 2px solid black;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 5px 10px #888888;
+    background-color: #f2f2f2;
+    display: flex;
+    flex-direction: column;
+}
+.login h3{
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+}
+.login label{
+    display: flex;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+}
+.login input[type="email"],
+.login input[type="password"]{
+    width: 100%;
+    padding: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+.login button{
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.login button:hover{
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+}
+.login .register-link{
+    text-align: center;
+    margin-top: 20px;
+    font-family: 'Arial', sans-serif;
+    color: blue;
+}
+.login p{
+    color: red;
+    font-weight: bold;
+    text-align: center;
+}
+/*Register Page*/
+.register{
+    margin: 50px auto;
+    width: 500px ;   
+    border: 2px solid black;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 5px 10px #888888;
+    background-color: #f2f2f2;
+    display: flex;
+    flex-direction: column;
+}
+.register h2{
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+}
+.register .role-tabs{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.register .role-tabs button{
+    flex: 1;
+    padding: 10px;
+    border: none;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.register .role-tabs button.active{
+    background-color: #e9143078;
+    border-radius: 10px;
+    color: black;
+    font-weight: bold;
+}
+.register .role-tabs button:hover{
+    background-color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.register form label{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+}
+.register form input[type="text"],
+.register form input[type="email"],
+.register form input[type="password"],
+.register form input[type="number"],
+.register form input[type="url"],
+.register form textarea{
+    width: 100%;
+    padding: 5px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+.register form button{
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin-top: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.register form button:hover{
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.register p{
+    color: red;
+    font-weight: bold;
+    text-align: center;
+}
+.register h3{
+    text-align: center;
+    margin-bottom: 15px;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+}
+.register h5{
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+}
+.register textarea{
+    resize: vertical;
+    min-height: 80px;
+    max-height: 200px;
+    font-family: 'Arial', sans-serif;
+}
+.login-link{
+    margin-top: 15px;
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    color: blue;
+}
