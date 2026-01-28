@@ -1,38 +1,54 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+
+
 db=SQLAlchemy()
 
 class admin(db.Model):
     __tablename__='admin'
     id=db.Column(db.Integer,primary_key=True)
-    username=db.Column(db.String(120),nullable=False,unique=True)
+    email=db.Column(db.String(120),nullable=False,unique=True)
     password=db.Column(db.String(120),nullable=False)
+    
+    def __repr__(self):
+        return f'<Admin {self.email}>'
 
 class Student(db.Model):
     __tablename__='students'
     id=db.Column(db.Integer,primary_key=True)
+    email=db.Column(db.String(100),unique=True,nullable=False)
+    password=db.Column(db.String(120),nullable=False)
     full_name=db.Column(db.String(240),nullable=False)
-    roll_number=db.Column(db.String(80),nullable=False,unique=True)
+    roll_number=db.Column(db.String(80),unique=True)
+    college=db.Column(db.String(240),nullable=False)
     branch=db.Column(db.String(120),nullable=False)
     cgpa=db.Column(db.Float,nullable=False)
     year=db.Column(db.Integer,nullable=False)
     resume_url=db.Column(db.String(500))
-    phone=db.Column(db.String(15),nullable=False)
     is_blacklisted=db.Column(db.Boolean,default=False)
     applications=db.relationship('Application',back_populates='student',lazy=True)#confusion on applications and backref/back_populates
+    
+    def __repr__(self):
+        return f'<Student {self.full_name} - {self.roll_number}>'
+    
 
 class Company(db.Model):
     __tablename__='companies'
     id=db.Column(db.Integer,nullable=False,primary_key=True)
+    email=db.Column(db.String(120),unique=True,nullable=False)
+    password=db.Column(db.String(120),nullable=False)
     company_name=db.Column(db.String(120),unique=True,nullable=False)
     hr_name=db.Column(db.String(120),nullable=False)
-    hr_contact=db.Column(db.String(15),nullable=False)
     website=db.Column(db.String(200),nullable=False,unique=True)
     description=db.Column(db.Text)
     address=db.Column(db.Text)
     is_approved=db.Column(db.Boolean,default=False)
     is_blacklisted=db.Column(db.Boolean,default=False)
     placement_drives=db.relationship('Placement_drive',back_populates='company',lazy=True)#
+
+    def __repr__(self):
+        return f'<Company {self.company_name}>'
+    
 
 class Application(db.Model):
     __tablename__='applications'
@@ -49,6 +65,9 @@ class Application(db.Model):
     resume_url=db.Column(db.String(500))
     student=db.relationship('Student',back_populates='applications')
     placement_drive=db.relationship('Placement_drive',back_populates='applications')
+
+    def __repr__(self):
+        return f'<Application Student ID: {self.student_id} Drive ID: {self.drive_id}>'
 
 class Placement_drive(db.Model):
     __tablename__='placement_drives'
@@ -69,6 +88,9 @@ class Placement_drive(db.Model):
     eligibilities=db.relationship('Drive_eligibility',back_populates='placement_drive',lazy=True)
     applications=db.relationship('Application',back_populates='placement_drive',lazy=True)
 
+    def __repr__(self):
+        return f'<Placement Drive {self.job_title} at {self.company.company_name}>'
+
 class Drive_eligibility(db.Model):
     __tablename__='drive_eligibility'
     id=db.Column(db.Integer,primary_key=True,nullable=False)
@@ -79,4 +101,9 @@ class Drive_eligibility(db.Model):
     backlog_allowed=db.Column(db.Boolean,default=False)
     additional_criteria=db.Column(db.Text)
     placement_drive=db.relationship('Placement_drive',back_populates='eligibilities',lazy=True)
+
+    def __repr__(self):
+        return f'<Drive Eligibility for Drive ID: {self.drive_id}>'
+    
+
 
