@@ -1,17 +1,20 @@
 from functools import wraps
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity,jwt_required
 from flask import jsonify
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+import json
+
 def role_required(required_role):
-    def decorator(fn):
+    def wrapper(fn):
         @wraps(fn)
-        def wrapper(*args, **kwargs):
-            verify_jwt_in_request()
-            identity = get_jwt_identity()
-            if identity['role'] != required_role:
-                return jsonify({"msg": "Access forbidden: incorrect role"}), 403
-            return fn(*args, **kwargs)
-        return wrapper
-    return decorator
+        @jwt_required()
+        def decorator(*args, **kwargs):
+            identity=json.loads(get_jwt_identity())
+            if identity['role']!=required_role:
+                return jsonify({"message": "Unauthorized access"}), 403
+            return fn(*args,**kwargs)
+        return decorator
+    return wrapper
+
 """
 This decorator is used to access
 routes and its functionality based on user 

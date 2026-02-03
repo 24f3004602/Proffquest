@@ -4,7 +4,7 @@ from datetime import datetime
 
 db=SQLAlchemy()
 
-class admin(db.Model):
+class Admin(db.Model):
     __tablename__='admin'
     id=db.Column(db.Integer,primary_key=True)
     email=db.Column(db.String(120),nullable=False,unique=True)
@@ -42,7 +42,7 @@ class Company(db.Model):
     website=db.Column(db.String(200),nullable=False,unique=True)
     description=db.Column(db.Text)
     address=db.Column(db.Text)
-    is_approved=db.Column(db.Boolean,default=False)
+    status=db.Column(db.String(50),default='pending')#pending,approved,rejected
     is_blacklisted=db.Column(db.Boolean,default=False)
     placement_drives=db.relationship('Placement_drive',back_populates='company',lazy=True)#
 
