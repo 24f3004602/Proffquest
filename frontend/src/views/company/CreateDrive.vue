@@ -6,7 +6,7 @@
     </div>
 
     <div class="card">
-      <form novalidate @submit.prevent="createDrive">
+      <form @submit.prevent="createDrive">
         <div class="form-row">
           <div class="form-group">
             <label for="job_title">Job Title:</label>
