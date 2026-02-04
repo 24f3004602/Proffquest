@@ -34,7 +34,7 @@ body {
 .btn {
   background: #2563eb;
   color: #fff;
-  border: 1px solid #1d4ed8;
+  border: none;
   border-radius: 6px;
   padding: 12px;
   font-size: 16px;
@@ -42,6 +42,7 @@ body {
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 .btn:hover:not(:disabled) {
@@ -663,7 +664,275 @@ body {
   border-color: #b91c1c;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* ===== COMPANY DASHBOARD ===== */
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.company-info {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.stats-section {
+  margin-bottom: 30px;
+}
+
+.stats-section h3 {
+  margin-bottom: 20px;
+  color: #343a40;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  font-size: 2rem;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2563eb;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recent-section {
+  margin-bottom: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: #343a40;
+}
+
+.recent-list {
+  display: grid;
+  gap: 15px;
+}
+
+.recent-item {
+  padding: 15px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.recent-header h4 {
+  margin: 0;
+  color: #2563eb;
+}
+
+.interview-info {
+  margin-top: 10px;
+  padding: 8px;
+  background: #f0f9ff;
+  border-radius: 4px;
+  border-left: 3px solid #2563eb;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  font-style: italic;
+  border:1px  rgb(80, 74, 74);
+  border-radius: 6px;
+  box-shadow: 0px 1px 3px gray;
+}
+
+.actions {
+  margin-bottom: 20px;
+}
+
+.drives-section {
+  margin-top: 20px;
+}
+
+.drives-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+
+}
+
+.drive-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  background: white;
+}
+
+.drive-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-content.large {
+  max-width: 800px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.applicants-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.applicant-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.applicant-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.applicant-actions select {
+  padding: 5px;
+}
+
+.applicant-actions textarea {
+  padding: 5px;
+  min-height: 60px;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 20px;
+}
+
+.eligibility-section {
+  margin-top: 20px;
+  border-top: 1px solid #ddd;
+  padding-top: 20px;
+}
+
+.eligibility-item {
+  border: 1px solid #eee;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.eligibility-item .form-group {
+  margin-bottom: 10px;
+}
+.backlog1{
+  padding: 10px;
+  border: none;
+  border-radius: 7px;
+  background-color: grey;
+  width: 50px;
+}
+.backlog2{
+  padding: 10px;
+  margin-left: 20px;
+  border: none;
+  border-radius: 7px;
+  background-color: gray;
+  width: 50px;
+}
+.backlog1.active{
+  background-color: #0056b3;
+  color: white;
+}
+.backlog1:hover{
+  transform: translateY(-2px);
+  box-shadow: gray;
+}
+.backlog2.active{
+  background-color: #0056b3;
+  color: white;
+}
+.backlog2:hover{
+  transform: translateY(-2px);
+  box-shadow: gray;
+}
+.no-drives, .no-applicants {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
 @media (max-width: 768px) {
   .auth-card,
   .register-card,
@@ -732,3 +1001,94 @@ body {
     font-size: 12px;
   }
 }
+
+/* ===== ADDITIONAL COMPANY STYLES ===== */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  color: #343a40;
+  margin: 0;
+}
+
+.back-link {
+  padding: 10px 15px;
+  background-color: #6c757d;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.back-link:hover {
+  background-color: #5a6268;
+}
+
+.create-drive-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.applications-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.application-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.application-header h3 {
+  margin: 0;
+  color: #2563eb;
+}
+
+.application-details {
+  margin-bottom: 15px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.resume-section {
+  margin-bottom: 15px;
+}
+
+.status-update-section {
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-applied { background-color: #cce5ff; color: #004085; }
+.status-shortlisted { background-color: #fff3cd; color: #856404; }
+.status-selected { background-color: #d4edda; color: #155724; }
+.status-rejected { background-color: #f8d7da; color: #721c24; }

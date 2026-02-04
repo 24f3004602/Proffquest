@@ -10,7 +10,7 @@ def role_required(required_role):
         def decorator(*args, **kwargs):
             identity=json.loads(get_jwt_identity())
             if identity['role']!=required_role:
-                return jsonify({"message": "Unauthorized access"}), 403
+                return {"message": "Unauthorized access"}, 403
             return fn(*args,**kwargs)
         return decorator
     return wrapper

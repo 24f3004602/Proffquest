@@ -28,7 +28,8 @@
         <!-- Company Navigation -->
         <div v-else-if="userRole === 'company'" class="nav-menu">
           <router-link to="/company/dashboard" class="nav-link">Dashboard</router-link>
-          <router-link to="/" class="nav-link">Home</router-link>
+          <router-link to="/company/create-drive" class="nav-link">Create Drive</router-link>
+          <router-link to="/company/applications" class="nav-link">Applications</router-link>
         </div>
       </div>
       <!-- User Actions -->

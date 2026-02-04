@@ -8,6 +8,8 @@ import AdminDrives from '@/views/admin/AdminDrives.vue'
 import AdminApplications from '@/views/admin/AdminApplications.vue'
 import StudentDashboard from '@/views/student/StudentDashboard.vue'
 import CompanyDashboard from '@/views/company/CompanyDashboard.vue'
+import CreateDrive from '@/views/company/CreateDrive.vue'
+import CompanyApplications from '@/views/company/CompanyApplications.vue'
 import Home from '@/home.vue'
 import { authState } from '@/stores/auth'
 
@@ -23,7 +25,9 @@ const router = createRouter({
     { path: '/admin/drives', component: AdminDrives, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/admin/applications', component: AdminApplications, meta: { requiresAuth: true, role: 'admin' } },
     { path: '/student/dashboard', component: StudentDashboard, meta: { requiresAuth: true, role: 'student' } },
-    { path: '/company/dashboard', component: CompanyDashboard, meta: { requiresAuth: true, role: 'company' } }
+    { path: '/company/dashboard', component: CompanyDashboard, meta: { requiresAuth: true, role: 'company' } },
+    { path: '/company/create-drive', component: CreateDrive, meta: { requiresAuth: true, role: 'company' } },
+    { path: '/company/applications', component: CompanyApplications, meta: { requiresAuth: true, role: 'company' } }
   ],
 })
 
