@@ -31,10 +31,10 @@ class Login(Resource):
             if company and check_password_hash(company.password,password):
                 if company.is_blacklisted:
                     return {'message':'Your company has been blacklisted'},403
-                if company.status!='approved':
-                    return {'message':'Your company is pending admin approval'},403
                 if company.status=='rejected':
-                    return {'message':'Your Company is rejected by admin'},403
+                    return {'message':'Your company registration was rejected by admin'},403
+                if company.status=='pending':
+                    return {'message':'Your company is pending admin approval'},403
                 access_token=create_access_token(identity=json.dumps({'role':'company','id':company.id}))
                 return {'access_token':access_token},200
             return {'message':'Invalid email or password'},401

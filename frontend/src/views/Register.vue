@@ -73,6 +73,16 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="roll_number">
+                                <i class="fas fa-id-badge"></i>
+                                Roll Number
+                            </label>
+                            <input v-model="roll_number" type="text" id="roll_number" placeholder="e.g., 21CS001" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
                             <label for="cgpa">
                                 <i class="fas fa-chart-line"></i>
                                 CGPA
@@ -193,7 +203,8 @@
                             college:this.college,
                             branch:this.branch,
                             year:this.year_of_study,
-                            cgpa:this.cgpa
+                            cgpa:this.cgpa,
+                            roll_number:this.roll_number
                         })
                     }else if(this.role==='company'){
                         await api.post('/register/company',{

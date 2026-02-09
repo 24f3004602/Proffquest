@@ -5,99 +5,108 @@
     </div>
 
     <div v-if="loading" class="loading">Loading...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
-      <div class="card company-info">
-        <h2>{{ company.company_name }}</h2>
-        <p><strong>HR:</strong> {{ company.hr_name }}</p>
-        <p><strong>Website:</strong> <a :href="company.website" target="_blank">{{ company.website }}</a></p>
-        <p><strong>Description:</strong> {{ company.description }}</p>
-        <p><strong>Address:</strong> {{ company.address }}</p>
+      <!-- Top Summary Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.totalDrives }}</div>
+            <div class="stat-label">Total Placement Drives</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.totalApplications }}</div>
+            <div class="stat-label">Total Applicants</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.shortlisted }}</div>
+            <div class="stat-label">Shortlisted</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.selected }}</div>
+            <div class="stat-label">Selected</div>
+          </div>
+        </div>
       </div>
 
-      <!-- Dashboard Statistics -->
-      <div class="stats-section">
-        <h3>Overview</h3>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-content">
-              <div class="stat-number">{{ stats.totalDrives }}</div>
-              <div class="stat-label">Placement Drives</div>
-            </div>
+      <div class="dashboard-row">
+        <!-- Recent Placement Drives -->
+        <div class="content-section">
+          <div class="section-header">
+            <h3>Recent Placement Drives</h3>
           </div>
-          <div class="stat-card">
-            <div class="stat-content">
-              <div class="stat-number">{{ stats.totalApplications }}</div>
-              <div class="stat-label">Total Applications</div>
-            </div>
+          <div v-if="recentDrives.length === 0" class="no-data">No drives created yet.</div>
+          <div v-else>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Drive Name</th>
+                  <th>Role</th>
+                  <th>Applicants</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="drive in recentDrives" :key="drive.id">
+                  <td>{{ drive.job_title }}</td>
+                  <td>{{ drive.job_title }}</td>
+                  <td>{{ drive.applicant_count }}</td>
+                  <td>
+                    <span :class="'status-badge status-' + drive.status">{{ drive.status }}</span>
+                  </td>
+                  <td class="actions">
+                    <router-link :to="'/company/applications?drive=' + drive.id" class="action-btn">View</router-link>
+                    <router-link :to="'/company/create-drive?edit=' + drive.id" class="action-btn">Edit</router-link>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="stat-card">
-            <div class="stat-content">
-              <div class="stat-number">{{ stats.shortlisted }}</div>
-              <div class="stat-label">Shortlisted</div>
-            </div>
+          <button class="btn btn-primary" @click="$router.push('/company/drives')">View All Drives</button>
+        </div>
+
+        <!-- Applicants per Drive Bar Chart -->
+        <div class="content-section">
+          <div class="section-header">
+            <h3>Applicants per Drive</h3>
           </div>
-          <div class="stat-card">
-            <div class="stat-content">
-              <div class="stat-number">{{ stats.selected }}</div>
-              <div class="stat-label">Selected</div>
+          <div v-if="drives.length === 0" class="no-data">No data available.</div>
+          <div v-else class="bar-chart">
+            <div v-for="drive in drives" :key="'bar-' + drive.id" class="bar-row">
+              <div class="bar-label">{{ drive.job_title }}</div>
+              <div class="bar-track">
+                <div class="bar-fill" :style="{ width: barWidth(drive) }"></div>
+              </div>
+              <div class="bar-value">{{ drive.applicant_count }}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Recent Applications -->
-      <div class="recent-section">
+      <div class="content-section dashboard-full">
+        <!-- Upcoming Interviews -->
         <div class="section-header">
-          <h3>Recent Applications</h3>
+          <h3>Upcoming Interviews</h3>
         </div>
-        <div v-if="recentApplications.length === 0" class="no-data">
-          No recent applications.
-        </div>
+        <div v-if="upcomingInterviews.length === 0" class="no-data">No upcoming interviews.</div>
         <div v-else class="recent-list">
-          <div v-for="app in recentApplications" :key="app.application_id" class="card recent-item">
+          <div v-for="item in upcomingInterviews" :key="item.application_id" class="recent-item compact">
             <div class="recent-header">
-              <h4>{{ app.student.full_name }}</h4>
-              <span :class="'status-badge status-' + app.status.toLowerCase()">{{ app.status }}</span>
+              <h4>{{ item.student.full_name }}</h4>
+              <span class="status-badge status-shortlisted">Interview</span>
             </div>
-            <p><strong>Applied for:</strong> {{ app.placement_drive.job_title }}</p>
-            <p><strong>Applied on:</strong> {{ new Date(app.applied_at).toLocaleDateString() }}</p>
-            <div v-if="app.interview_schedule" class="interview-info">
-              <p><strong>Interview:</strong> {{ new Date(app.interview_schedule).toLocaleString() }}</p>
-            </div>
+            <p><strong>Drive:</strong> {{ item.drive.job_title }}</p>
+            <p><strong>Schedule:</strong> {{ formatDateTime(item.interview_schedule) }}</p>
           </div>
         </div>
-      </div>
-
-      <!-- Active Drives -->
-      <div class="drives-section">
-        <div class="section-header">
-          <h3>Your Placement Drives</h3>
-        </div>
-        <div class="no-data">
-        <div v-if="drives.length === 0" class="no-drives">
-          No placement drives created yet.
-        </div>
-        <div v-else class="drives-list">
-          <div v-for="drive in drives" :key="drive.id" class="card drive-card">
-            <h4>{{ drive.job_title }}</h4>
-
-            <p><strong>Package:</strong> {{ drive.package_offered }}</p>
-            <p><strong>Location:</strong> {{ drive.location }}</p>
-            <p><strong>Status:</strong> {{ drive.status }}</p>
-            <p><strong>Active:</strong> {{ drive.is_active ? 'Yes' : 'No' }}</p>
-            <p><strong>Applicants:</strong> {{ drive.applicant_count }}</p>
-            <p><strong>Deadline:</strong> {{ new Date(drive.application_deadline).toLocaleDateString() }}</p>
-            <p><strong>Drive Date:</strong> {{ new Date(drive.drive_date).toLocaleDateString() }}</p>
-            <div class="drive-actions">
-              <button @click="gotoApplications()" class="btn btn-secondary">View applicants</button>
-              <button @click="toggleDriveStatus(drive)" class="btn btn-secondary">
-                {{ drive.is_active ? 'Close Drive' : 'Open Drive' }}
-              </button>
-            </div>
-          </div>
-        </div>
-        </div>
+        <button class="btn btn-secondary" @click="$router.push('/company/interviews')">View All Interviews</button>
       </div>
     </div>
   </div>
@@ -114,43 +123,49 @@ export default {
       error: null,
       company: {},
       drives: [],
-      stats: {
-        totalDrives: 0,
-        totalApplications: 0,
-        shortlisted: 0,
-        selected: 0
-      },
-      recentApplications: []
+      stats: { totalDrives: 0, totalApplications: 0, shortlisted: 0, selected: 0 },
+      upcomingInterviews: []
+    }
+  },
+  computed: {
+    recentDrives() {
+      return this.drives.slice(0, 5)
+    },
+    maxApplicants() {
+      if (this.drives.length === 0) return 0
+      return Math.max(...this.drives.map(d => d.applicant_count || 0))
     }
   },
   async mounted() {
     await this.fetchDashboard()
+    await this.fetchInterviews()
   },
   methods: {
-    gotoApplications(){
-        this.$router.push('/company/applications')
+    formatDate(d) { return new Date(d).toLocaleDateString() },
+    formatDateTime(d) { return new Date(d).toLocaleString() },
+    barWidth(drive) {
+      if (!this.maxApplicants) return '0%'
+      const percent = Math.round((drive.applicant_count / this.maxApplicants) * 100)
+      return `${percent}%`
     },
     async fetchDashboard() {
       try {
-        const response = await api.get('/company/dashboard')
-        this.company = response.data.company
-        this.drives = response.data.drives
-        this.stats = response.data.stats
-        this.recentApplications = response.data.recentApplications
-        this.loading = false
-      } catch (error) {
-        this.error = error.response?.data?.message || 'Failed to load dashboard'
+        const { data } = await api.get('/company/dashboard')
+        this.company = data.company
+        this.drives = data.drives
+        this.stats = data.stats
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to load dashboard'
+      } finally {
         this.loading = false
       }
     },
-    async toggleDriveStatus(drive) {
+    async fetchInterviews() {
       try {
-        await api.put(`/company/drive/${drive.id}/status`, {
-          is_active: !drive.is_active
-        })
-        drive.is_active = !drive.is_active
-      } catch (error) {
-        alert(error.response?.data?.message || 'Failed to update drive status')
+        const { data } = await api.get('/company/interviews')
+        this.upcomingInterviews = (data.interviews || []).filter(i => i.interview_schedule).slice(0, 5)
+      } catch (err) {
+        this.upcomingInterviews = []
       }
     }
   }

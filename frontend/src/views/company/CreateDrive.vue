@@ -25,7 +25,14 @@
           </div>
           <div class="form-group">
             <label for="max_applicants">Max Applicants (optional):</label>
-            <input v-model="driveData.max_applicants" type="number" id="max_applicants">
+            <input v-model.number="driveData.max_applicants" type="number" id="max_applicants" min="1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rounds">Number of Rounds:</label>
+            <input v-model.number="driveData.rounds" type="number" id="rounds" min="1" placeholder="e.g., 3">
           </div>
         </div>
 
@@ -46,7 +53,7 @@
         </div>
 
         <div class="eligibility-section">
-          <h3 v-if="driveData.eligibility.length>0">Eligibility Criteria</h3>
+          <h3 v-if="driveData.eligibility.length > 0">Eligibility Criteria</h3>
           <div v-for="(el, index) in driveData.eligibility" :key="index" class="card eligibility-item">
             <div class="form-row">
               <div class="form-group">
@@ -55,19 +62,19 @@
               </div>
               <div class="form-group">
                 <label :for="'min_cgpa_' + index">Min CGPA:</label>
-                <input v-model="el.min_cgpa" type="number" step="0.1" :id="'min_cgpa_' + index" required>
+                <input v-model.number="el.min_cgpa" type="number" step="0.1" min="0" max="10" :id="'min_cgpa_' + index" required>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label :for="'passing_year_' + index">Passing Year:</label>
-                <input v-model="el.passing_year" type="number" :id="'passing_year_' + index">
+                <input v-model.number="el.passing_year" type="number" :id="'passing_year_' + index">
               </div>
               <div class="form-group">
-                <label> Backlog Allowed</label>
-                  <button type="button" class="backlog1" :class="{active:el.backlog_allowed===true}" @click="el.backlog_allowed=true">YES</button>
-                  <button type="button" class="backlog2" :class="{active:el.backlog_allowed===false}" @click="el.backlog_allowed=false">NO</button>
+                <label>Backlog Allowed</label>
+                <button type="button" class="backlog1" :class="{ active: el.backlog_allowed === true }" @click="el.backlog_allowed = true">YES</button>
+                <button type="button" class="backlog2" :class="{ active: el.backlog_allowed === false }" @click="el.backlog_allowed = false">NO</button>
               </div>
             </div>
 
@@ -76,14 +83,14 @@
               <textarea v-model="el.additional_criteria" :id="'additional_' + index" rows="2"></textarea>
             </div>
 
-            <button type="button" @click="removeEligibility(index)" class="btn ">Remove Criteria</button>
+            <button type="button" @click="removeEligibility(index)" class="btn">Remove Criteria</button>
           </div>
 
           <button type="button" @click="addEligibility" class="btn">Add Eligibility Criteria</button>
         </div>
 
         <div class="form-actions">
-          <button type="submit"  class="btn" :disabled="loading">
+          <button type="submit" class="btn" :disabled="loading">
             {{ loading ? 'Creating...' : 'Create Drive' }}
           </button>
           <button type="button" class="btn" @click="goToDashboard">Cancel</button>
@@ -109,46 +116,29 @@ export default {
         application_deadline: '',
         drive_date: '',
         max_applicants: null,
-        eligibility: [
-          {
-            branch: '',
-            min_cgpa: 0.0,
-            passing_year: null,
-            backlog_allowed: false,
-            additional_criteria: ''
-          }
-        ]
+        rounds: null,
+        eligibility: [{ branch: '', min_cgpa: 0.0, passing_year: null, backlog_allowed: false, additional_criteria: '' }]
       }
     }
   },
   methods: {
-    goToDashboard(){
-        this.$router.push('/company/dashboard')
+    newEligibility() {
+      return { branch: '', min_cgpa: 0.0, passing_year: null, backlog_allowed: false, additional_criteria: '' }
     },
-    addEligibility() {
-      this.driveData.eligibility.push({
-        branch: '',
-        min_cgpa: 0.0,
-        passing_year: null,
-        backlog_allowed: false,
-        additional_criteria: ''
-      })
-    },
+    goToDashboard() { this.$router.push('/company/dashboard') },
+    addEligibility() { this.driveData.eligibility.push(this.newEligibility()) },
     removeEligibility(index) {
-      if (this.driveData.eligibility.length>=1) {
+      if (this.driveData.eligibility.length >= 1) {
         this.driveData.eligibility.splice(index, 1)
-        }
-      },
+      }
+    },
     async createDrive() {
       this.loading = true
-      console.log('Creating drive with data:', this.driveData)
       try {
-        const response = await api.post('/company/create_drive', this.driveData)
-        console.log('Drive created successfully:', response.data)
+        await api.post('/company/create_drive', this.driveData)
         this.$router.push('/company/dashboard')
-      } catch (error) {
-        console.error('Error creating drive:', error)
-        alert(error.response?.data?.message || 'Failed to create drive')
+      } catch (err) {
+        alert(err.response?.data?.message || 'Failed to create drive')
       } finally {
         this.loading = false
       }

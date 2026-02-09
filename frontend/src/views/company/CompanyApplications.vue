@@ -1,15 +1,14 @@
 <template>
   <div class="applications-page">
     <div class="page-header">
-      <h1>Manage Applications</h1>
-      <router-link to="/company/dashboard" class="back-link">← Back to Dashboard</router-link>
+      <h1>Applications Management</h1>
     </div>
 
     <div v-if="loading" class="loading">Loading applications...</div>
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
-      <!-- Drive Filter -->
-      <div class="filter-section">
+    <div class="application-filter">
+      <div class="filter-sec">
         <div class="form-group">
           <label for="drive-filter">Filter by Drive:</label>
           <select v-model="selectedDriveId" @change="filterApplications" id="drive-filter">
@@ -19,64 +18,76 @@
             </option>
           </select>
         </div>
+        <div class="form-group">
+          <label for="status-filter">Filter by Status:</label>
+          <select v-model="statusFilter" @change="filterApplications" id="status-filter">
+            <option value="">All Status</option>
+            <option value="Applied">Applied</option>
+            <option value="Shortlisted">Shortlisted</option>
+            <option value="Selected">Selected</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
       </div>
-
-      <!-- Applications List -->
-      <div v-if="filteredApplications.length === 0" class="no-applications">
-        No applications found.
+    </div>
+      <div v-if="filteredApplications.length === 0" class="no-data">No applications found.</div>
+      <div v-else class="content-section">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Drive</th>
+              <th>CGPA</th>
+              <th>Status</th>
+              <th>Applied</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="application in filteredApplications" :key="application.application_id">
+              <td>
+                <div>
+                  <strong>{{ application.full_name }}</strong>
+                  <div class="text-small">{{ application.branch }} | {{ application.roll_number }}</div>
+                </div>
+              </td>
+              <td>{{ application.drive_title }}</td>
+              <td>{{ application.cgpa }}</td>
+              <td>
+                <span :class="'status-badge status-' + application.status.toLowerCase()">{{ application.status }}</span>
+              </td>
+              <td>{{ formatDate(application.applied_at) }}</td>
+              <td class="actions">
+                <button class="action-btn" @click="openProfile(application)">View</button>
+                <button class="action-btn btn-approve" @click="setStatus(application, 'Shortlisted')">Shortlist</button>
+                <button class="action-btn btn-reject" @click="setStatus(application, 'Rejected')">Reject</button>
+                <button class="action-btn" @click="setStatus(application, 'Selected')">Mark Selected</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div v-else class="applications-list">
-        <div v-for="application in filteredApplications" :key="application.application_id" class="card application-card">
-          <div class="application-header">
-            <h3>{{ application.student.full_name }}</h3>
-            <span :class="'status-badge status-' + application.status.toLowerCase()">
-              {{ application.status }}
-            </span>
-          </div>
+    </div>
 
-          <div class="application-details">
-            <div class="detail-row">
-              <span><strong>Roll Number:</strong> {{ application.student.roll_number }}</span>
-              <span><strong>College:</strong> {{ application.student.college }}</span>
-            </div>
-            <div class="detail-row">
-              <span><strong>Branch:</strong> {{ application.student.branch }}</span>
-              <span><strong>CGPA:</strong> {{ application.student.cgpa }}</span>
-            </div>
-            <div class="detail-row">
-              <span><strong>Year:</strong> {{ application.student.year }}</span>
-              <span><strong>Applied:</strong> {{ new Date(application.applied_at).toLocaleDateString() }}</span>
-            </div>
-            <div v-if="application.interview_schedule" class="detail-row">
-              <span><strong>Interview:</strong> {{ new Date(application.interview_schedule).toLocaleString() }}</span>
-            </div>
-          </div>
-
-          <div v-if="application.student.resume_url" class="resume-section">
-            <a :href="application.student.resume_url" target="_blank" class="btn btn-secondary">View Resume</a>
-          </div>
-
-          <!-- Status Update Section -->
-          <div class="status-update-section">
-            <div class="form-group">
-              <label>Update Status:</label>
-              <select v-model="application.newStatus" @change="updateStatus(application)">
-                <option value="Applied">Applied</option>
-                <option value="Shortlisted">Shortlisted</option>
-                <option value="Selected">Selected</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
-
-            <div v-if="application.newStatus === 'Shortlisted'" class="form-group">
-              <button @click="scheduleInterview(application)" class="btn btn-secondary">Schedule Interview</button>
-            </div>
-
-            <div class="form-group">
-              <label>Feedback/Notes:</label>
-              <textarea v-model="application.feedback" @blur="updateFeedback(application)" rows="3" placeholder="Add feedback or notes..."></textarea>
-            </div>
-          </div>
+    <!-- Profile Modal -->
+    <div v-if="profileModal.visible" class="modal" @click.self="closeProfile">
+      <div class="card modal-content">
+        <h3>Student Profile</h3>
+        <p><strong>Name:</strong> {{ profileModal.data.full_name }}</p>
+        <p><strong>Email:</strong> {{ profileModal.data.email }}</p>
+        <p><strong>Roll Number:</strong> {{ profileModal.data.roll_number }}</p>
+        <p><strong>College:</strong> {{ profileModal.data.college }}</p>
+        <p><strong>Branch:</strong> {{ profileModal.data.branch }}</p>
+        <p><strong>CGPA:</strong> {{ profileModal.data.cgpa }}</p>
+        <p><strong>Year:</strong> {{ profileModal.data.year }}</p>
+        <p><strong>Resume:</strong>
+          <span v-if="profileModal.data.resume_url">
+            <a :href="profileModal.data.resume_url" target="_blank">View Resume</a>
+          </span>
+          <span v-else>N/A</span>
+        </p>
+        <div class="form-actions">
+          <button class="btn btn-secondary" @click="closeProfile">Close</button>
         </div>
       </div>
     </div>
@@ -95,12 +106,13 @@ export default {
       drives: [],
       applications: [],
       selectedDriveId: '',
-      filteredApplications: []
+      statusFilter: '',
+      filteredApplications: [],
+      profileModal: { visible: false, data: {} }
     }
   },
   async mounted() {
     await this.fetchApplications()
-    // Check for drive filter from query params
     const driveId = this.$route.query.drive
     if (driveId) {
       this.selectedDriveId = driveId
@@ -108,77 +120,54 @@ export default {
     }
   },
   methods: {
+    formatDate(d) { return new Date(d).toLocaleDateString() },
+    filterApplications() {
+      let list = this.applications
+      if (this.selectedDriveId) {
+        list = list.filter(app => app.drive_id === parseInt(this.selectedDriveId))
+      }
+      if (this.statusFilter) {
+        list = list.filter(app => app.status === this.statusFilter)
+      }
+      this.filteredApplications = list
+    },
     async fetchApplications() {
       try {
-        // First get company drives
-        const dashboardResponse = await api.get('/company/dashboard')
-        this.drives = dashboardResponse.data.drives
+        const { data } = await api.get('/company/dashboard')
+        this.drives = data.drives
 
-        // Get all applications for all drives
-        const applicationsPromises = this.drives.map(drive =>
-          api.get(`/company/drive/${drive.id}/applicants`)
+        const responses = await Promise.all(
+          this.drives.map(drive => api.get(`/company/drive/${drive.id}/applicants`))
+        )
+        this.applications = responses.flatMap((res, idx) =>
+          res.data.applicants.map(a => ({
+            ...a,
+            drive_id: this.drives[idx].id,
+            drive_title: this.drives[idx].job_title
+          }))
         )
 
-        const responses = await Promise.all(applicationsPromises)
-        this.applications = responses.flatMap(response => response.data.applicants)
-
-        // Initialize feedback and newStatus for each application
-        this.applications = this.applications.map(app => ({
-          ...app,
-          newStatus: app.status,
-          feedback: app.interview_notes || ''
-        }))
-
         this.filteredApplications = [...this.applications]
-        this.loading = false
-      } catch (error) {
-        this.error = error.response?.data?.message || 'Failed to load applications'
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to load applications'
+      } finally {
         this.loading = false
       }
     },
-    filterApplications() {
-      if (this.selectedDriveId) {
-        this.filteredApplications = this.applications.filter(app => app.placement_drive.id === parseInt(this.selectedDriveId))
-      } else {
-        this.filteredApplications = [...this.applications]
-      }
-    },
-    async updateStatus(application) {
+    async setStatus(application, status) {
       try {
-        await api.put(`/company/application/${application.application_id}/status`, {
-          status: application.newStatus,
-          feedback: application.feedback
-        })
-        application.status = application.newStatus
-      } catch (error) {
-        alert(error.response?.data?.message || 'Failed to update status')
-        application.newStatus = application.status
+        await api.put(`/company/application/${application.application_id}/status`, { status })
+        application.status = status
+        this.filterApplications()
+      } catch (err) {
+        alert(err.response?.data?.message || 'Failed to update status')
       }
     },
-    async updateFeedback(application) {
-      try {
-        await api.put(`/company/application/${application.application_id}/status`, {
-          status: application.status,
-          feedback: application.feedback
-        })
-      } catch (error) {
-        alert('Failed to update feedback')
-      }
+    openProfile(application) {
+      this.profileModal = { visible: true, data: application }
     },
-    scheduleInterview(application) {
-      const date = prompt('Enter interview date and time (YYYY-MM-DDTHH:MM):')
-      if (date) {
-        try {
-          api.put(`/company/application/${application.application_id}/status`, {
-            status: application.status,
-            feedback: application.feedback,
-            interview_schedule: date
-          })
-          application.interview_schedule = date
-        } catch (error) {
-          alert('Failed to schedule interview')
-        }
-      }
+    closeProfile() {
+      this.profileModal = { visible: false, data: {} }
     }
   }
 }

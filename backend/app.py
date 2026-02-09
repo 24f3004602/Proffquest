@@ -4,7 +4,8 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from resources.auth import Login, StudentRegister, CompanyRegister
 from resources.admin import *
-from resources.company import CompanyDashboard, CreatePlacementDrive, CompanyDrives, DriveApplicants, UpdateApplicationStatus, UpdateDriveStatus
+from resources.company import CompanyDashboard, CreatePlacementDrive, CompanyDrives, DriveApplicants, UpdateApplicationStatus, UpdateDriveStatus, CompanyInterviews, CompanySelectedStudents, CompanyProfile, CompanySubmitApproval, CompanyResults
+from resources.student import StudentDashboard, StudentProfile, StudentDrives, StudentDriveDetail, StudentApply, StudentApplications
 from flask_migrate import Migrate
 from flask_cors import CORS
 app = Flask(__name__)
@@ -43,6 +44,20 @@ api.add_resource(CompanyDrives,'/api/company/drives')
 api.add_resource(DriveApplicants,'/api/company/drive/<int:drive_id>/applicants')
 api.add_resource(UpdateApplicationStatus,'/api/company/application/<int:application_id>/status')
 api.add_resource(UpdateDriveStatus,'/api/company/drive/<int:drive_id>/status')
+api.add_resource(CompanyInterviews,'/api/company/interviews')
+api.add_resource(CompanySelectedStudents,'/api/company/selected')
+api.add_resource(CompanyProfile,'/api/company/profile')
+api.add_resource(CompanySubmitApproval,'/api/company/profile/submit')
+api.add_resource(CompanyResults,'/api/company/results')
+
+# Student routes
+api.add_resource(StudentDashboard,'/api/student/dashboard')
+api.add_resource(StudentProfile,'/api/student/profile')
+api.add_resource(StudentDrives,'/api/student/drives')
+api.add_resource(StudentDriveDetail,'/api/student/drive/<int:drive_id>')
+api.add_resource(StudentApply,'/api/student/apply/<int:drive_id>')
+api.add_resource(StudentApplications,'/api/student/applications')
+
 # Create tables
 with app.app_context():
     db.create_all()
