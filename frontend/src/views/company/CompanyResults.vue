@@ -9,7 +9,9 @@
     <div v-else>
       <div class="tab-row">
         <button class="tab-btn" :class="{ active: activeTab === 'Shortlisted' }" @click="activeTab = 'Shortlisted'">Shortlisted</button>
-        <button class="tab-btn" :class="{ active: activeTab === 'Selected' }" @click="activeTab = 'Selected'">Selected</button>
+        <button class="tab-btn" :class="{ active: activeTab === 'Interview' }" @click="activeTab = 'Interview'">Interview</button>
+        <button class="tab-btn" :class="{ active: activeTab === 'Offer' }" @click="activeTab = 'Offer'">Offer</button>
+        <button class="tab-btn" :class="{ active: activeTab === 'Placed' }" @click="activeTab = 'Placed'">Placed</button>
         <button class="tab-btn" :class="{ active: activeTab === 'Rejected' }" @click="activeTab = 'Rejected'">Rejected</button>
       </div>
       <div v-if="filteredResults.length === 0" class="no-data">No results for this tab.</div>
@@ -40,11 +42,12 @@
               </td>
               <td><span :class="'status-badge status-' + item.status.toLowerCase()">{{ item.status }}</span></td>
               <td>
-                <span v-if="item.status === 'Selected'">Yes</span>
+                <span v-if="item.status === 'Offer' || item.status === 'Placed'">Yes</span>
                 <span v-else>No</span>
               </td>
               <td class="actions">
-                <button class="action-btn btn-approve" @click="setStatus(item, 'Selected')">Mark Selected</button>
+                <button class="action-btn btn-approve" @click="setStatus(item, 'Offer')">Send Offer</button>
+                <button class="action-btn btn-approve" @click="setStatus(item, 'Placed')">Mark Placed</button>
                 <button class="action-btn btn-reject" @click="setStatus(item, 'Rejected')">Mark Rejected</button>
               </td>
             </tr>
@@ -65,7 +68,7 @@ export default {
       loading: true,
       error: null,
       results: [],
-      activeTab: 'Shortlisted'
+      activeTab: 'Offer'
     }
   },
   computed: {

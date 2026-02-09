@@ -174,9 +174,57 @@ class AdminApplications(Resource):
                 'status':app.status,
                 'applied_at':app.applied_at.isoformat() if app.applied_at else None,
                 'shortlisted_at':app.shortlisted_at.isoformat() if app.shortlisted_at else None,
+                'interview_at':app.interview_at.isoformat() if app.interview_at else None,
+                'offer_at':app.offer_at.isoformat() if app.offer_at else None,
+                'placed_at':app.placed_at.isoformat() if app.placed_at else None,
                 'selected_at':app.selected_at.isoformat() if app.selected_at else None
             } for app in applications
         ],200
+
+
+class AdminStudentProfile(Resource):
+    @role_required('admin')
+    def get(self, student_id):
+        student = Student.query.get_or_404(student_id)
+        return {
+            'id': student.id,
+            'full_name': student.full_name,
+            'email': student.email,
+            'roll_number': student.roll_number,
+            'college': student.college,
+            'branch': student.branch,
+            'cgpa': student.cgpa,
+            'year': student.year,
+            'resume_url': student.resume_url,
+            'is_blacklisted': student.is_blacklisted
+        }, 200
+
+
+class AdminStudentApplications(Resource):
+    @role_required('admin')
+    def get(self, student_id):
+        applications = Application.query.filter_by(student_id=student_id)
+        apps_data = []
+        for app in applications.order_by(Application.applied_at.desc()).all():
+            drive = Placement_drive.query.get(app.drive_id)
+            if drive:
+                apps_data.append({
+                    'application_id': app.id,
+                    'drive_id': drive.id,
+                    'job_title': drive.job_title,
+                    'company_name': drive.company.company_name,
+                    'package_offered': drive.package_offered,
+                    'location': drive.location,
+                    'status': app.status,
+                    'applied_at': app.applied_at.isoformat() if app.applied_at else None,
+                    'shortlisted_at': app.shortlisted_at.isoformat() if app.shortlisted_at else None,
+                    'interview_at': app.interview_at.isoformat() if app.interview_at else None,
+                    'interview_schedule': app.interview_schedule.isoformat() if app.interview_schedule else None,
+                    'offer_at': app.offer_at.isoformat() if app.offer_at else None,
+                    'placed_at': app.placed_at.isoformat() if app.placed_at else None
+                })
+
+        return {'applications': apps_data}, 200
 
 class BlacklistStudent(Resource):
     @role_required('admin')

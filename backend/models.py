@@ -52,13 +52,19 @@ class Company(db.Model):
 
 class Application(db.Model):
     __tablename__='applications'
+    __table_args__ = (
+        db.UniqueConstraint('student_id', 'drive_id', name='uq_application_student_drive'),
+    )
     id=db.Column(db.Integer,nullable=False,primary_key=True)
     student_id=db.Column(db.Integer,db.ForeignKey('students.id'),nullable=False)
     drive_id=db.Column(db.Integer,db.ForeignKey('placement_drives.id'),nullable=False)
     application_date=db.Column(db.Date,nullable=False,default=datetime.utcnow)
-    status=db.Column(db.String(50),default='Applied')#selected,shortlisted,rejected,applied
+    status=db.Column(db.String(50),default='Applied')#Applied,Shortlisted,Interview,Offer,Rejected,Placed
     applied_at=db.Column(db.DateTime, default=datetime.utcnow)
     shortlisted_at=db.Column(db.DateTime)
+    interview_at=db.Column(db.DateTime)
+    offer_at=db.Column(db.DateTime)
+    placed_at=db.Column(db.DateTime)
     selected_at=db.Column(db.DateTime)
     interview_schedule=db.Column(db.DateTime)
     interview_mode=db.Column(db.String(20))

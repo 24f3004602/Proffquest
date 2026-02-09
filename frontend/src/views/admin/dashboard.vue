@@ -36,7 +36,19 @@
                 <span class="status-value">{{ chartData.shortlisted }}</span>
               </div>
               <div class="status-item">
-                <span class="status-label">Selected:</span>
+                <span class="status-label">Interview:</span>
+                <span class="status-value">{{ chartData.interview }}</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Offer:</span>
+                <span class="status-value">{{ chartData.offer }}</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Placed:</span>
+                <span class="status-value">{{ chartData.placed }}</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Selected (legacy):</span>
                 <span class="status-value">{{ chartData.selected }}</span>
               </div>
               <div class="status-item">
@@ -136,6 +148,9 @@ export default {
       chartData: {
         applied: 0,
         shortlisted: 0,
+        interview: 0,
+        offer: 0,
+        placed: 0,
         selected: 0,
         rejected: 0,
         companiesApproved: 0,
@@ -182,6 +197,9 @@ export default {
 
         this.chartData.applied = applications.filter(app => app.status === 'Applied').length
         this.chartData.shortlisted = applications.filter(app => app.status === 'Shortlisted').length
+        this.chartData.interview = applications.filter(app => app.status === 'Interview').length
+        this.chartData.offer = applications.filter(app => app.status === 'Offer').length
+        this.chartData.placed = applications.filter(app => app.status === 'Placed').length
         this.chartData.selected = applications.filter(app => app.status === 'Selected').length
         this.chartData.rejected = applications.filter(app => app.status === 'Rejected').length
 

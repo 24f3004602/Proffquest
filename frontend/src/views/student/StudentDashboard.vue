@@ -12,7 +12,7 @@
       </div>
       <div class="student-hero-card">
         <p class="hero-card-title">Placement Info</p>
-        <div class="hero-card-metric">{{ stats.shortlisted + stats.selected }}</div>
+        <div class="hero-card-metric">{{ stats.shortlisted + stats.offer + stats.placed }}</div>
         <p class="hero-card-subtitle">Shortlisted + Offers</p>
         <div class="hero-card-meta">
           <span>{{ stats.total_applied }} total applications</span>
@@ -36,14 +36,19 @@
             <span class="stat-chip info">Interview Ready</span>
           </div>
           <div class="student-stat-card">
-            <p class="stat-label">Interviews sched.</p>
-            <h3 class="stat-number">{{ upcomingInterviews.length }}</h3>
-            <span class="stat-chip">Upcoming</span>
+            <p class="stat-label">Interviews</p>
+            <h3 class="stat-number">{{ stats.interview }}</h3>
+            <span class="stat-chip">Scheduled</span>
           </div>
           <div class="student-stat-card">
-            <p class="stat-label">Offers Received</p>
-            <h3 class="stat-number">{{ stats.selected }}</h3>
-            <span class="stat-chip success">Selected</span>
+            <p class="stat-label">Offers</p>
+            <h3 class="stat-number">{{ stats.offer }}</h3>
+            <span class="stat-chip success">Offer</span>
+          </div>
+          <div class="student-stat-card">
+            <p class="stat-label">Placed</p>
+            <h3 class="stat-number">{{ stats.placed }}</h3>
+            <span class="stat-chip success">Placed</span>
           </div>
         </div>
 
@@ -138,7 +143,7 @@ export default {
       error: null,
       student: {},
       profile:{},
-      stats: { total_applied: 0, shortlisted: 0, selected: 0, rejected: 0 },
+      stats: { total_applied: 0, shortlisted: 0, interview: 0, offer: 0, placed: 0, rejected: 0 },
       upcomingInterviews: [],
       recentApplications: [],
       upcomingDrives: []

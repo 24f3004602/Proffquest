@@ -4,7 +4,7 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from resources.auth import Login, StudentRegister, CompanyRegister
 from resources.admin import *
-from resources.company import CompanyDashboard, CreatePlacementDrive, CompanyDrives, DriveApplicants, UpdateApplicationStatus, UpdateDriveStatus, CompanyInterviews, CompanySelectedStudents, CompanyProfile, CompanySubmitApproval, CompanyResults
+from resources.company import CompanyDashboard, CreatePlacementDrive, CompanyDrives, DriveApplicants, UpdateApplicationStatus, UpdateDriveStatus, CompanyInterviews, CompanySelectedStudents, CompanyProfile, CompanySubmitApproval, CompanyResults, CompanyStudentProfile, CompanyStudentApplications
 from resources.student import StudentDashboard, StudentProfile, StudentDrives, StudentDriveDetail, StudentApply, StudentApplications
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -38,6 +38,8 @@ api.add_resource(RejectPlacementDrive,'/api/admin/reject_drive/<int:drive_id>')
 api.add_resource(AdminApplications,'/api/admin/applications')
 api.add_resource(BlacklistStudent,'/api/admin/blacklist_student/<int:student_id>')
 api.add_resource(ActivateStudent,'/api/admin/activate_student/<int:student_id>')
+api.add_resource(AdminStudentProfile,'/api/admin/student/<int:student_id>')
+api.add_resource(AdminStudentApplications,'/api/admin/student/<int:student_id>/applications')
 api.add_resource(CompanyDashboard,'/api/company/dashboard')
 api.add_resource(CreatePlacementDrive,'/api/company/create_drive')
 api.add_resource(CompanyDrives,'/api/company/drives')
@@ -49,6 +51,8 @@ api.add_resource(CompanySelectedStudents,'/api/company/selected')
 api.add_resource(CompanyProfile,'/api/company/profile')
 api.add_resource(CompanySubmitApproval,'/api/company/profile/submit')
 api.add_resource(CompanyResults,'/api/company/results')
+api.add_resource(CompanyStudentProfile,'/api/company/student/<int:student_id>')
+api.add_resource(CompanyStudentApplications,'/api/company/student/<int:student_id>/applications')
 
 # Student routes
 api.add_resource(StudentDashboard,'/api/student/dashboard')

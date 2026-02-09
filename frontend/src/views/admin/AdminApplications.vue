@@ -17,6 +17,9 @@
             <th>Status</th>
             <th>Applied At</th>
             <th>Shortlisted At</th>
+            <th>Interview At</th>
+            <th>Offer At</th>
+            <th>Placed At</th>
             <th>Selected At</th>
           </tr>
         </thead>
@@ -32,6 +35,9 @@
             </td>
             <td>{{ app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'N/A' }}</td>
             <td>{{ app.shortlisted_at ? new Date(app.shortlisted_at).toLocaleDateString() : 'N/A' }}</td>
+            <td>{{ app.interview_at ? new Date(app.interview_at).toLocaleDateString() : 'N/A' }}</td>
+            <td>{{ app.offer_at ? new Date(app.offer_at).toLocaleDateString() : 'N/A' }}</td>
+            <td>{{ app.placed_at ? new Date(app.placed_at).toLocaleDateString() : 'N/A' }}</td>
             <td>{{ app.selected_at ? new Date(app.selected_at).toLocaleDateString() : 'N/A' }}</td>
           </tr>
         </tbody>
@@ -68,8 +74,14 @@ export default {
           return 'status-applied'
         case 'Shortlisted':
           return 'status-shortlisted'
+        case 'Interview':
+          return 'status-interview'
+        case 'Offer':
+          return 'status-offer'
+        case 'Placed':
+          return 'status-placed'
         case 'Selected':
-          return 'status-selected'
+          return 'status-offer'
         case 'Rejected':
           return 'status-rejected'
         default:

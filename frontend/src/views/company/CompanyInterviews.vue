@@ -12,7 +12,7 @@
         <div class="stat-card">
           <div class="stat-content">
             <div class="stat-number">{{ interviews.length }}</div>
-            <div class="stat-label">Total Shortlisted</div>
+            <div class="stat-label">Interview Pipeline</div>
           </div>
         </div>
         <div class="stat-card">
@@ -50,7 +50,7 @@
             </div>
       </div>
 
-      <div v-if="filteredInterviews.length === 0" class="no-data">No shortlisted students found.</div>
+      <div v-if="filteredInterviews.length === 0" class="no-data">No interview candidates found.</div>
 
       <!-- Interviews Table -->
       <div v-else class="content-section">
@@ -224,7 +224,7 @@ export default {
       m.saving = true
       try {
         await api.put(`/company/application/${m.interview.application_id}/status`, {
-          status: 'Shortlisted',
+          status: 'Interview',
           interview_schedule: m.date,
           interview_mode: m.mode,
           interview_location: m.location,
@@ -246,7 +246,7 @@ export default {
       item.processing = true
       try {
         await api.put(`/company/application/${item.application_id}/status`, {
-          status: 'Selected',
+          status: 'Offer',
           feedback: item.interview_notes
         })
         // Remove from interviews list (they're now in Selected page)

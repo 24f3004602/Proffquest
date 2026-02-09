@@ -19,19 +19,25 @@ class CompanyDashboard(Resource):
         drives_data = []
         total_applications = 0
         shortlisted_count = 0
-        selected_count = 0
+        interview_count = 0
+        offer_count = 0
+        placed_count = 0
 
         for drive in drives:
             applications = Application.query.filter_by(drive_id=drive.id).all()
             applicant_count = len(applications)
             total_applications += applicant_count
 
-            # Count shortlisted and selected
+            # Count shortlisted, interviews, offers, and placements
             for app in applications:
                 if app.status == 'Shortlisted':
                     shortlisted_count += 1
-                elif app.status == 'Selected':
-                    selected_count += 1
+                elif app.status == 'Interview':
+                    interview_count += 1
+                elif app.status in ['Offer', 'Selected']:
+                    offer_count += 1
+                elif app.status == 'Placed':
+                    placed_count += 1
 
             drives_data.append({
                 'id': drive.id,
@@ -91,7 +97,9 @@ class CompanyDashboard(Resource):
                 'totalDrives': len(drives),
                 'totalApplications': total_applications,
                 'shortlisted': shortlisted_count,
-                'selected': selected_count
+                'interview': interview_count,
+                'offer': offer_count,
+                'placed': placed_count
             },
             'drives': drives_data,
             'recentApplications': recent_apps_data
@@ -214,6 +222,9 @@ class DriveApplicants(Resource):
                 'status': app.status,
                 'applied_at': app.applied_at.isoformat(),
                 'shortlisted_at': app.shortlisted_at.isoformat() if app.shortlisted_at else None,
+                'interview_at': app.interview_at.isoformat() if app.interview_at else None,
+                'offer_at': app.offer_at.isoformat() if app.offer_at else None,
+                'placed_at': app.placed_at.isoformat() if app.placed_at else None,
                 'selected_at': app.selected_at.isoformat() if app.selected_at else None,
                 'interview_schedule': app.interview_schedule.isoformat() if app.interview_schedule else None,
                 'interview_mode': app.interview_mode,
@@ -238,8 +249,11 @@ class UpdateApplicationStatus(Resource):
         interview_mode = data.get('interview_mode')
         interview_location = data.get('interview_location')
 
-        if status not in ['Applied', 'Shortlisted', 'Selected', 'Rejected']:
+        if status not in ['Applied', 'Shortlisted', 'Interview', 'Offer', 'Rejected', 'Placed', 'Selected']:
             return {'message': 'Invalid status'}, 400
+
+        if status == 'Selected':
+            status = 'Offer'
 
         application = Application.query.filter_by(id=application_id).first()
         if not application:
@@ -252,8 +266,13 @@ class UpdateApplicationStatus(Resource):
         application.status = status
         if status == 'Shortlisted':
             application.shortlisted_at = datetime.utcnow()
-        elif status == 'Selected':
-            application.selected_at = datetime.utcnow()
+        elif status == 'Interview':
+            application.interview_at = datetime.utcnow()
+        elif status == 'Offer':
+            application.offer_at = datetime.utcnow()
+            application.selected_at = application.selected_at or application.offer_at
+        elif status == 'Placed':
+            application.placed_at = datetime.utcnow()
         if interview_schedule:
             try:
                 application.interview_schedule = datetime.fromisoformat(interview_schedule)
@@ -310,7 +329,7 @@ class CompanyInterviews(Resource):
         # Get all shortlisted applications with interview schedules across all company drives
         applications = Application.query.join(Placement_drive).filter(
             Placement_drive.company_id == company.id,
-            Application.status == 'Shortlisted'
+            Application.status.in_(['Shortlisted', 'Interview'])
         ).order_by(Application.interview_schedule.asc()).all()
 
         interviews = []
@@ -357,11 +376,11 @@ class CompanySelectedStudents(Resource):
         if company.status != 'approved':
             return {'message': 'Company not approved yet'}, 403
 
-        # Get all selected applications across all company drives
+        # Get all offer applications across all company drives
         applications = Application.query.join(Placement_drive).filter(
             Placement_drive.company_id == company.id,
-            Application.status == 'Selected'
-        ).order_by(Application.selected_at.desc()).all()
+            Application.status.in_(['Offer', 'Selected'])
+        ).order_by(Application.offer_at.desc()).all()
 
         selected = []
         for app in applications:
@@ -387,6 +406,7 @@ class CompanySelectedStudents(Resource):
                         'package_offered': drive.package_offered
                     },
                     'selected_at': app.selected_at.isoformat() if app.selected_at else None,
+                    'offer_at': app.offer_at.isoformat() if app.offer_at else None,
                     'interview_mode': app.interview_mode,
                     'interview_location': app.interview_location,
                     'interview_notes': app.interview_notes
@@ -465,6 +485,75 @@ class CompanySubmitApproval(Resource):
         return {'message': 'Submitted for admin approval'}
 
 
+class CompanyStudentProfile(Resource):
+    @role_required('company')
+    def get(self, student_id):
+        identity = json.loads(get_jwt_identity())
+        company_id = identity['id']
+        company = Company.query.get_or_404(company_id)
+        if company.status != 'approved':
+            return {'message': 'Company not approved yet'}, 403
+
+        has_application = Application.query.join(Placement_drive).filter(
+            Placement_drive.company_id == company.id,
+            Application.student_id == student_id
+        ).first()
+        if not has_application:
+            return {'message': 'Student not found for this company'}, 404
+
+        student = Student.query.get_or_404(student_id)
+        return {
+            'id': student.id,
+            'full_name': student.full_name,
+            'email': student.email,
+            'roll_number': student.roll_number,
+            'college': student.college,
+            'branch': student.branch,
+            'cgpa': student.cgpa,
+            'year': student.year,
+            'resume_url': student.resume_url
+        }
+
+
+class CompanyStudentApplications(Resource):
+    @role_required('company')
+    def get(self, student_id):
+        identity = json.loads(get_jwt_identity())
+        company_id = identity['id']
+        company = Company.query.get_or_404(company_id)
+        if company.status != 'approved':
+            return {'message': 'Company not approved yet'}, 403
+
+        applications = Application.query.join(Placement_drive).filter(
+            Placement_drive.company_id == company.id,
+            Application.student_id == student_id
+        ).order_by(Application.applied_at.desc()).all()
+
+        if not applications:
+            return {'message': 'No applications found for this student'}, 404
+
+        apps_data = []
+        for app in applications:
+            drive = Placement_drive.query.get(app.drive_id)
+            if drive:
+                apps_data.append({
+                    'application_id': app.id,
+                    'drive_id': drive.id,
+                    'job_title': drive.job_title,
+                    'package_offered': drive.package_offered,
+                    'status': app.status,
+                    'applied_at': app.applied_at.isoformat() if app.applied_at else None,
+                    'shortlisted_at': app.shortlisted_at.isoformat() if app.shortlisted_at else None,
+                    'interview_at': app.interview_at.isoformat() if app.interview_at else None,
+                    'interview_schedule': app.interview_schedule.isoformat() if app.interview_schedule else None,
+                    'offer_at': app.offer_at.isoformat() if app.offer_at else None,
+                    'placed_at': app.placed_at.isoformat() if app.placed_at else None,
+                    'interview_notes': app.interview_notes
+                })
+
+        return {'applications': apps_data}
+
+
 class CompanyResults(Resource):
     @role_required('company')
     def get(self):
@@ -476,7 +565,7 @@ class CompanyResults(Resource):
 
         applications = Application.query.join(Placement_drive).filter(
             Placement_drive.company_id == company.id,
-            Application.status.in_(['Shortlisted', 'Selected', 'Rejected'])
+            Application.status.in_(['Shortlisted', 'Interview', 'Offer', 'Rejected', 'Placed', 'Selected'])
         ).order_by(Application.applied_at.desc()).all()
 
         results = []
@@ -504,6 +593,8 @@ class CompanyResults(Resource):
                         'package_offered': drive.package_offered
                     },
                     'selected_at': app.selected_at.isoformat() if app.selected_at else None,
+                    'offer_at': app.offer_at.isoformat() if app.offer_at else None,
+                    'placed_at': app.placed_at.isoformat() if app.placed_at else None,
                     'interview_notes': app.interview_notes
                 })
 

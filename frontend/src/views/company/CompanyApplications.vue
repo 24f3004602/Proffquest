@@ -24,7 +24,9 @@
             <option value="">All Status</option>
             <option value="Applied">Applied</option>
             <option value="Shortlisted">Shortlisted</option>
-            <option value="Selected">Selected</option>
+            <option value="Interview">Interview</option>
+            <option value="Offer">Offer</option>
+            <option value="Placed">Placed</option>
             <option value="Rejected">Rejected</option>
           </select>
         </div>
@@ -60,8 +62,10 @@
               <td class="actions">
                 <button class="action-btn" @click="openProfile(application)">View</button>
                 <button class="action-btn btn-approve" @click="setStatus(application, 'Shortlisted')">Shortlist</button>
+                <button class="action-btn" @click="setStatus(application, 'Interview')">Interview</button>
+                <button class="action-btn btn-approve" @click="setStatus(application, 'Offer')">Offer</button>
+                <button class="action-btn" @click="setStatus(application, 'Placed')">Placed</button>
                 <button class="action-btn btn-reject" @click="setStatus(application, 'Rejected')">Reject</button>
-                <button class="action-btn" @click="setStatus(application, 'Selected')">Mark Selected</button>
               </td>
             </tr>
           </tbody>
@@ -73,19 +77,45 @@
     <div v-if="profileModal.visible" class="modal" @click.self="closeProfile">
       <div class="card modal-content">
         <h3>Student Profile</h3>
-        <p><strong>Name:</strong> {{ profileModal.data.full_name }}</p>
-        <p><strong>Email:</strong> {{ profileModal.data.email }}</p>
-        <p><strong>Roll Number:</strong> {{ profileModal.data.roll_number }}</p>
-        <p><strong>College:</strong> {{ profileModal.data.college }}</p>
-        <p><strong>Branch:</strong> {{ profileModal.data.branch }}</p>
-        <p><strong>CGPA:</strong> {{ profileModal.data.cgpa }}</p>
-        <p><strong>Year:</strong> {{ profileModal.data.year }}</p>
-        <p><strong>Resume:</strong>
-          <span v-if="profileModal.data.resume_url">
-            <a :href="profileModal.data.resume_url" target="_blank">View Resume</a>
-          </span>
-          <span v-else>N/A</span>
-        </p>
+        <div v-if="profileModal.loading" class="loading">Loading profile...</div>
+        <div v-else-if="profileModal.error" class="error-message">{{ profileModal.error }}</div>
+        <div v-else>
+          <p><strong>Name:</strong> {{ profileModal.data.full_name }}</p>
+          <p><strong>Email:</strong> {{ profileModal.data.email }}</p>
+          <p><strong>Roll Number:</strong> {{ profileModal.data.roll_number }}</p>
+          <p><strong>College:</strong> {{ profileModal.data.college }}</p>
+          <p><strong>Branch:</strong> {{ profileModal.data.branch }}</p>
+          <p><strong>CGPA:</strong> {{ profileModal.data.cgpa }}</p>
+          <p><strong>Year:</strong> {{ profileModal.data.year }}</p>
+          <p><strong>Resume:</strong>
+            <span v-if="profileModal.data.resume_url">
+              <a :href="profileModal.data.resume_url" target="_blank">View Resume</a>
+            </span>
+            <span v-else>N/A</span>
+          </p>
+        </div>
+        <h4>Applications at Your Company</h4>
+        <div v-if="profileModal.appsLoading" class="loading">Loading applications...</div>
+        <div v-else-if="profileModal.appsError" class="error-message">{{ profileModal.appsError }}</div>
+        <div v-else-if="profileModal.applications.length === 0" class="no-data">No applications found.</div>
+        <div v-else class="content-section">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Drive</th>
+                <th>Status</th>
+                <th>Applied</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="app in profileModal.applications" :key="app.application_id">
+                <td>{{ app.job_title }}</td>
+                <td><span :class="'status-badge status-' + app.status.toLowerCase()">{{ app.status }}</span></td>
+                <td>{{ formatDate(app.applied_at) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div class="form-actions">
           <button class="btn btn-secondary" @click="closeProfile">Close</button>
         </div>
@@ -108,7 +138,7 @@ export default {
       selectedDriveId: '',
       statusFilter: '',
       filteredApplications: [],
-      profileModal: { visible: false, data: {} }
+      profileModal: { visible: false, data: {}, loading: false, error: null, applications: [], appsLoading: false, appsError: null }
     }
   },
   async mounted() {
@@ -163,11 +193,24 @@ export default {
         alert(err.response?.data?.message || 'Failed to update status')
       }
     },
-    openProfile(application) {
-      this.profileModal = { visible: true, data: application }
+    async openProfile(application) {
+      this.profileModal = { visible: true, data: {}, loading: true, error: null, applications: [], appsLoading: true, appsError: null }
+      try {
+        const [profileRes, appsRes] = await Promise.all([
+          api.get(`/company/student/${application.student_id}`),
+          api.get(`/company/student/${application.student_id}/applications`)
+        ])
+        this.profileModal.data = profileRes.data
+        this.profileModal.applications = appsRes.data.applications || []
+      } catch (err) {
+        this.profileModal.error = err.response?.data?.message || 'Failed to load profile'
+      } finally {
+        this.profileModal.loading = false
+        this.profileModal.appsLoading = false
+      }
     },
     closeProfile() {
-      this.profileModal = { visible: false, data: {} }
+      this.profileModal = { visible: false, data: {}, loading: false, error: null, applications: [], appsLoading: false, appsError: null }
     }
   }
 }

@@ -3,6 +3,7 @@ from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Student, Placement_drive, Application, Drive_eligibility
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 from utils.decorators import role_required
 import json
 
@@ -21,13 +22,15 @@ class StudentDashboard(Resource):
         applications = Application.query.filter_by(student_id=student.id).all()
         total_applied = len(applications)
         shortlisted = sum(1 for a in applications if a.status == 'Shortlisted')
-        selected = sum(1 for a in applications if a.status == 'Selected')
+        interview = sum(1 for a in applications if a.status == 'Interview')
+        offer = sum(1 for a in applications if a.status in ['Offer', 'Selected'])
+        placed = sum(1 for a in applications if a.status == 'Placed')
         rejected = sum(1 for a in applications if a.status == 'Rejected')
 
         # Upcoming interviews
         upcoming_interviews = []
         for app in applications:
-            if app.interview_schedule and app.status == 'Shortlisted':
+            if app.interview_schedule and app.status in ['Shortlisted', 'Interview']:
                 drive = Placement_drive.query.get(app.drive_id)
                 if drive:
                     upcoming_interviews.append({
@@ -89,7 +92,9 @@ class StudentDashboard(Resource):
             'stats': {
                 'total_applied': total_applied,
                 'shortlisted': shortlisted,
-                'selected': selected,
+                'interview': interview,
+                'offer': offer,
+                'placed': placed,
                 'rejected': rejected
             },
             'upcoming_interviews': upcoming_interviews,
@@ -320,8 +325,12 @@ class StudentApply(Resource):
             status='Applied',
             resume_url=student.resume_url
         )
-        db.session.add(new_application)
-        db.session.commit()
+        try:
+            db.session.add(new_application)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return {'message': 'You have already applied to this drive'}, 400
 
         return {'message': 'Application submitted successfully', 'application_id': new_application.id}, 201
 
@@ -350,6 +359,9 @@ class StudentApplications(Resource):
                     'status': app.status,
                     'applied_at': app.applied_at.isoformat() if app.applied_at else None,
                     'shortlisted_at': app.shortlisted_at.isoformat() if app.shortlisted_at else None,
+                    'interview_at': app.interview_at.isoformat() if app.interview_at else None,
+                    'offer_at': app.offer_at.isoformat() if app.offer_at else None,
+                    'placed_at': app.placed_at.isoformat() if app.placed_at else None,
                     'selected_at': app.selected_at.isoformat() if app.selected_at else None,
                     'interview_schedule': app.interview_schedule.isoformat() if app.interview_schedule else None,
                     'interview_notes': app.interview_notes

@@ -216,7 +216,10 @@ body {
 /* Status Badges */
 .status-applied { background-color: #cce5ff; color: #004085; }
 .status-shortlisted { background-color: #fff3cd; color: #856404; }
+.status-interview { background-color: #ffe8cc; color: #7a4b00; }
 .status-selected { background-color: #d4edda; color: #155724; }
+.status-offer { background-color: #d1f2eb; color: #0b5345; }
+.status-placed { background-color: #c3e6cb; color: #155724; }
 .status-rejected { background-color: #f8d7da; color: #721c24; }
 
 /* ===== STUDENT EXPERIENCE ===== */
@@ -2025,5 +2028,8 @@ body {
 
 .status-applied { background-color: #cce5ff; color: #004085; }
 .status-shortlisted { background-color: #fff3cd; color: #856404; }
+.status-interview { background-color: #ffe8cc; color: #7a4b00; }
 .status-selected { background-color: #d4edda; color: #155724; }
+.status-offer { background-color: #d1f2eb; color: #0b5345; }
+.status-placed { background-color: #c3e6cb; color: #155724; }
 .status-rejected { background-color: #f8d7da; color: #721c24; }

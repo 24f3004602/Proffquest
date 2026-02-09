@@ -99,6 +99,39 @@
         </div>
       </div>
 
+      <div class="card profile-history">
+        <div class="section-header">
+          <h3>Application & Placement History</h3>
+        </div>
+        <div v-if="historyLoading" class="loading">Loading history...</div>
+        <div v-else-if="historyError" class="error-message">{{ historyError }}</div>
+        <div v-else-if="applications.length === 0" class="no-data">No applications yet.</div>
+        <div v-else class="content-section">
+          <table class="data-table student-table">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Applied</th>
+                <th>Latest Update</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="app in applications" :key="app.application_id">
+                <td><strong>{{ app.company_name }}</strong></td>
+                <td>{{ app.job_title }}</td>
+                <td>
+                  <span :class="'status-badge status-' + app.status.toLowerCase()">{{ app.status }}</span>
+                </td>
+                <td>{{ formatDate(app.applied_at) }}</td>
+                <td>{{ formatDate(app.last_update) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <aside class="profile-side">
         <div class="card student-side-card">
           <div class="side-card-header">
@@ -133,7 +166,10 @@ export default {
       profile: {},
       editing: false,
       saving: false,
-      editData: {}
+      editData: {},
+      historyLoading: true,
+      historyError: null,
+      applications: []
     }
   },
   computed: {
@@ -145,8 +181,13 @@ export default {
   },
   async mounted() {
     await this.fetchProfile()
+    await this.fetchHistory()
   },
   methods: {
+    formatDate(d) {
+      if (!d) return '—'
+      return new Date(d).toLocaleDateString()
+    },
     async fetchProfile() {
       try {
         const { data } = await api.get('/student/profile')
@@ -155,6 +196,20 @@ export default {
         this.error = err.response?.data?.message || 'Failed to load profile'
       } finally {
         this.loading = false
+      }
+    },
+    async fetchHistory() {
+      this.historyLoading = true
+      try {
+        const { data } = await api.get('/student/applications')
+        this.applications = (data.applications || []).map(app => ({
+          ...app,
+          last_update: app.placed_at || app.offer_at || app.interview_at || app.shortlisted_at || app.selected_at || app.applied_at
+        }))
+      } catch (err) {
+        this.historyError = err.response?.data?.message || 'Failed to load history'
+      } finally {
+        this.historyLoading = false
       }
     },
     startEdit() {

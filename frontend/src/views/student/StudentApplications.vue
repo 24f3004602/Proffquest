@@ -18,7 +18,9 @@
             <option value="">All</option>
             <option value="Applied">Applied</option>
             <option value="Shortlisted">Shortlisted</option>
-            <option value="Selected">Selected</option>
+            <option value="Interview">Interview</option>
+            <option value="Offer">Offer</option>
+            <option value="Placed">Placed</option>
             <option value="Rejected">Rejected</option>
           </select>
         </div>
@@ -61,7 +63,7 @@
           <div v-for="app in interviewApps" :key="'int-' + app.application_id" class="card recent-item">
             <div class="recent-header">
               <h4>{{ app.job_title }}</h4>
-              <span class="status-badge status-shortlisted">Interview</span>
+              <span class="status-badge status-interview">Interview</span>
             </div>
             <p><strong>Company:</strong> {{ app.company_name }}</p>
             <p><strong>Date:</strong> {{ formatDateTime(app.interview_schedule) }}</p>
@@ -92,7 +94,7 @@ export default {
       return this.applications.filter(a => a.status === this.statusFilter)
     },
     interviewApps() {
-      return this.applications.filter(a => a.interview_schedule && a.status === 'Shortlisted')
+      return this.applications.filter(a => a.interview_schedule && (a.status === 'Shortlisted' || a.status === 'Interview'))
     },
     selectedApps() {
       return this.applications.filter(a => a.status === 'Selected')

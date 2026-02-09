@@ -63,7 +63,7 @@ export default {
   },
   computed: {
     historyRows() {
-      return this.applications.filter(a => a.status === 'Selected' || a.status === 'Rejected')
+      return this.applications.filter(a => a.status === 'Offer' || a.status === 'Placed' || a.status === 'Selected' || a.status === 'Rejected')
     }
   },
   async mounted() {

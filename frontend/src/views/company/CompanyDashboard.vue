@@ -29,8 +29,20 @@
         </div>
         <div class="stat-card">
           <div class="stat-content">
-            <div class="stat-number">{{ stats.selected }}</div>
-            <div class="stat-label">Selected</div>
+            <div class="stat-number">{{ stats.interview }}</div>
+            <div class="stat-label">Interviews</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.offer }}</div>
+            <div class="stat-label">Offers</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.placed }}</div>
+            <div class="stat-label">Placed</div>
           </div>
         </div>
       </div>
@@ -123,7 +135,7 @@ export default {
       error: null,
       company: {},
       drives: [],
-      stats: { totalDrives: 0, totalApplications: 0, shortlisted: 0, selected: 0 },
+      stats: { totalDrives: 0, totalApplications: 0, shortlisted: 0, interview: 0, offer: 0, placed: 0 },
       upcomingInterviews: []
     }
   },
