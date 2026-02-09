@@ -2,7 +2,19 @@
 .env
 .env.local
 .env.production
-
+backend/.env
+backend/__pycache__/
+backend/migrations/
+backend/instance/
+frontend/node_modules/
+frontend/.vscode/
+frontend/public/
+frontend/.env
+frontend/.gitignore
+frontend/jsconfig.json
+frontend/package-lock.json
+frontend/package.json
+frontend/vite.config.js
 # Python
 __pycache__/
 *.pyc
