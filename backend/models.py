@@ -70,6 +70,7 @@ class Application(db.Model):
     interview_mode=db.Column(db.String(20))
     interview_location=db.Column(db.String(240))
     interview_notes=db.Column(db.Text)
+    interview_reminder_sent_at=db.Column(db.DateTime)
     resume_url=db.Column(db.String(500))
     student=db.relationship('Student',back_populates='applications')
     placement_drive=db.relationship('Placement_drive',back_populates='applications')
@@ -113,6 +114,41 @@ class Drive_eligibility(db.Model):
 
     def __repr__(self):
         return f'<Drive Eligibility for Drive ID: {self.drive_id}>'
+
+
+class ExportJob(db.Model):
+    __tablename__='export_jobs'
+    id=db.Column(db.Integer, primary_key=True)
+    requester_role=db.Column(db.String(20), nullable=False)  # student, company
+    requester_id=db.Column(db.Integer, nullable=False)
+    job_type=db.Column(db.String(40), nullable=False)  # student_applications, company_applications
+    status=db.Column(db.String(20), default='queued')  # queued, processing, completed, failed
+    file_path=db.Column(db.String(500))
+    error=db.Column(db.Text)
+    created_at=db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at=db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f'<ExportJob {self.id} {self.job_type} {self.status}>'
+
+
+class PlacementReport(db.Model):
+    __tablename__='placement_reports'
+    id=db.Column(db.Integer, primary_key=True)
+    company_id=db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    report_month=db.Column(db.Integer, nullable=False)
+    report_year=db.Column(db.Integer, nullable=False)
+    status=db.Column(db.String(20), default='queued')  # queued, processing, completed, failed
+    html_path=db.Column(db.String(500))
+    pdf_path=db.Column(db.String(500))
+    error=db.Column(db.Text)
+    created_at=db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at=db.Column(db.DateTime)
+
+    company=db.relationship('Company')
+
+    def __repr__(self):
+        return f'<PlacementReport {self.company_id} {self.report_month}/{self.report_year}>'
     
 
 

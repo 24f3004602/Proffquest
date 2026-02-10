@@ -5,6 +5,8 @@
         <h1 class="student-eyebrow">My Applications</h1>
         <h2 class="student-title">Track Every Application</h2>
         <p class="page-subtitle">Stay updated with each drive you have applied for.</p>
+        <!-- New: Export button -->
+       
       </div>
     </div>
 
@@ -23,6 +25,18 @@
             <option value="Placed">Placed</option>
             <option value="Rejected">Rejected</option>
           </select>
+           
+        </div>
+        <div class="export-app-btn">
+        <button class="btn btn-primary" @click="exportApplications" :disabled="exportLoading || exportJob">
+          {{ exportLoading ? 'Starting Export...' : exportJob ? 'Export in Progress...' : 'Export to CSV' }}
+        </button>
+        <!-- New: Export status and download -->
+        <div v-if="exportJob" class="export-status">
+          <p>Export Status: {{ exportJob.status }}</p>
+          <p v-if="exportJob.error">Error: {{ exportJob.error }}</p>
+          <a v-if="exportJob.status === 'completed' && exportJob.file_path" :href="downloadUrl" class="btn btn-success" download>Download CSV</a>
+        </div>
         </div>
       </div>
 
@@ -85,7 +99,10 @@ export default {
       loading: true,
       error: null,
       applications: [],
-      statusFilter: ''
+      statusFilter: '',
+      exportLoading: false,
+      exportJob: null,
+      exportInterval: null
     }
   },
   computed: {
@@ -98,6 +115,9 @@ export default {
     },
     selectedApps() {
       return this.applications.filter(a => a.status === 'Selected')
+    },
+    downloadUrl() {
+      return this.exportJob ? `${api.defaults.baseURL}/exports/student/download/${this.exportJob.id}` : ''
     }
   },
   async mounted() {
@@ -121,7 +141,39 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    async exportApplications() {
+      this.exportLoading = true
+      try {
+        const { data } = await api.post('/exports/student/applications')
+        this.exportJob = { id: data.job_id, status: 'queued' }
+        this.pollExportStatus()
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to start export'
+      } finally {
+        this.exportLoading = false
+      }
+    },
+    async pollExportStatus() {
+      this.exportInterval = setInterval(async () => {
+        try {
+          const { data } = await api.get('/exports/student/jobs')
+          const job = data.jobs.find(j => j.id === this.exportJob.id)
+          if (job) {
+            this.exportJob = job
+            if (job.status === 'completed' || job.status === 'failed') {
+              clearInterval(this.exportInterval)
+            }
+          }
+        } catch (err) {
+          this.error = 'Failed to check export status'
+          clearInterval(this.exportInterval)
+        }
+      }, 5000) // Poll every 5 seconds
     }
+  },
+  beforeUnmount() {
+    if (this.exportInterval) clearInterval(this.exportInterval)
   }
 }
 </script>

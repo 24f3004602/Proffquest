@@ -99,39 +99,6 @@
         </div>
       </div>
 
-      <div class="card profile-history">
-        <div class="section-header">
-          <h3>Application & Placement History</h3>
-        </div>
-        <div v-if="historyLoading" class="loading">Loading history...</div>
-        <div v-else-if="historyError" class="error-message">{{ historyError }}</div>
-        <div v-else-if="applications.length === 0" class="no-data">No applications yet.</div>
-        <div v-else class="content-section">
-          <table class="data-table student-table">
-            <thead>
-              <tr>
-                <th>Company</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Applied</th>
-                <th>Latest Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="app in applications" :key="app.application_id">
-                <td><strong>{{ app.company_name }}</strong></td>
-                <td>{{ app.job_title }}</td>
-                <td>
-                  <span :class="'status-badge status-' + app.status.toLowerCase()">{{ app.status }}</span>
-                </td>
-                <td>{{ formatDate(app.applied_at) }}</td>
-                <td>{{ formatDate(app.last_update) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       <aside class="profile-side">
         <div class="card student-side-card">
           <div class="side-card-header">

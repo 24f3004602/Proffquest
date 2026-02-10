@@ -25,7 +25,9 @@ body {
   color: #222;
   background-color: #fafafa;
 }
-
+.export-app-btn{
+  
+}
 #app {
   min-height: 100vh;
   display: flex;
@@ -550,6 +552,7 @@ body {
 }
 .student-filter-app {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   width: 40%;
   gap: 12px;
   margin-bottom: 18px;
