@@ -1,10 +1,14 @@
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
 from models import db, Student, Placement_drive, Application, Drive_eligibility
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from utils.decorators import role_required
+from utils.cache import (
+    cache_response, CACHE_PREFIXES, invalidate_drives_cache,
+    invalidate_student_cache, invalidate_application_cache
+)
 import json
 
 

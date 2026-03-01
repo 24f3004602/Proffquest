@@ -3,6 +3,7 @@ from flask_jwt_extended import get_jwt_identity,jwt_required
 import json
 
 def role_required(required_role):
+    """Decorator to restrict route access based on user role (admin, student, company)."""
     def wrapper(fn):
         @wraps(fn)
         @jwt_required()
@@ -13,9 +14,3 @@ def role_required(required_role):
             return fn(*args,**kwargs)
         return decorator
     return wrapper
-
-"""
-This decorator is used to access
-routes and its functionality based on user 
-roles like admin, student, and company.
-"""

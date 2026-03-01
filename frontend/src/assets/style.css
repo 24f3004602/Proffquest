@@ -25,9 +25,7 @@ body {
   color: #222;
   background-color: #fafafa;
 }
-.export-app-btn{
-  
-}
+
 #app {
   min-height: 100vh;
   display: flex;
@@ -48,7 +46,8 @@ body {
 }
 
 .btn {
-  color: #fff;
+  color: white;
+  background-color: var(--student-blue);
   border: none;
   border-radius: 6px;
   padding: 12px;
@@ -60,7 +59,7 @@ body {
   margin-bottom: 20px;
 }
 .btn1{
-  background-color: #1f8a8c;
+  background-color: var(--student-blue);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -130,8 +129,7 @@ body {
 }
 
 .btn:hover:not(:disabled) {
-  background: #1d4ed8;
-  border-color: #1e40af;
+  background:var(--student-blue-dark);
 }
 
 .btn:disabled {
@@ -1398,15 +1396,25 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.nav-link:hover,
-.nav-link.active {
-  color: #111827;
-  background-color: #f3f4f6;
+.nav-link:hover{
+  background-color:var(--student-blue);
+  transform: translateY(-2px);
+}
+.nav-link:focus {
+  color: black;
+  background-color: var(--student-blue);
+  font-weight: 700;
 }
 
-.nav-link.active {
-  background-color: #f3f4f6;
+/* Active state for dashboard navigation */
+.nav-link.router-link-exact-active {
+  background-color: var(--student-blue);
+  color: #ffffff;
   font-weight: 600;
+}
+
+.nav-link.router-link-exact-active:hover {
+  background-color: var(--student-blue-dark);
 }
 
 .nav-link-btn {
@@ -2036,3 +2044,1691 @@ body {
 .status-offer { background-color: #d1f2eb; color: #0b5345; }
 .status-placed { background-color: #c3e6cb; color: #155724; }
 .status-rejected { background-color: #f8d7da; color: #721c24; }
+
+/* ================================
+   HOME PAGE STYLES
+   ================================ */
+.home-page {
+  min-height: 100vh;
+}
+
+.home-page .hero-section {
+  background: black;
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.home-page .hero-logo {
+  width: 120px;
+  height: 120px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+.home-page .hero-title {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.home-page .hero-subtitle {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  margin-bottom: 30px;
+}
+
+.home-page .hero-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.home-page .btn {
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.home-page .btn-primary {
+  background: white;
+  color: #667eea;
+}
+
+.home-page .btn-secondary {
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+}
+
+.home-page .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.home-page .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.home-page .section-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+/* Home Stats Section */
+.home-page .stats-section {
+  padding: 60px 20px;
+  background: #f8f9fa;
+}
+
+.home-page .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.home-page .stat-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.home-page .stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.home-page .stat-label {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Home Charts Section */
+.home-page .charts-section {
+  padding: 60px 20px;
+  background: white;
+}
+
+.home-page .charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.home-page .chart-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.home-page .chart-card h3 {
+  margin-bottom: 15px;
+  text-align: center;
+  color: #333;
+}
+
+.home-page .chart-container {
+  height: 300px;
+}
+
+/* Home Sectors Section */
+.home-page .sectors-section {
+  margin-top: 40px;
+}
+
+.home-page .sectors-section h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.home-page .sectors-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+}
+
+.home-page .sector-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 30px;
+  text-align: center;
+}
+
+.home-page .sector-name {
+  font-weight: 600;
+}
+
+.home-page .sector-count {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/* Home Content Section */
+.home-page .content-section {
+  padding: 60px 20px;
+}
+
+.home-page .about-section,
+.home-page .benefits-section,
+.home-page .college-benefits {
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.home-page .about-section p,
+.home-page .benefits-section p,
+.home-page .college-benefits p {
+  max-width: 800px;
+  margin: 0 auto;
+  color: #666;
+  line-height: 1.8;
+}
+
+.home-page .features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+}
+
+.home-page .feature-item {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.home-page .feature-item h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.home-page .feature-item p {
+  color: #666;
+}
+
+.home-page .feature-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-page .feature-link:hover {
+  text-decoration: underline;
+}
+
+.home-page .features-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.home-page .feature-list {
+  text-align: left;
+  list-style: none;
+  padding: 0;
+}
+
+.home-page .feature-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  color: #666;
+}
+
+.home-page .feature-list li:before {
+  content: "✓";
+  color: #4CAF50;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .home-page .hero-title {
+    font-size: 2rem;
+  }
+  
+  .home-page .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .home-page .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* ================================
+   ATS SCREENER PAGE STYLES
+   ================================ */
+.ats-screener-page {
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: #f5f7fa;
+}
+
+.ats-screener-page .container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.ats-screener-page .page-title {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.ats-screener-page .page-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.ats-screener-page .screener-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+/* ATS Input Section */
+.ats-screener-page .input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ats-screener-page .input-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .input-card h3 {
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.ats-screener-page .input-hint {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.ats-screener-page .input-textarea {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.ats-screener-page .input-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.ats-screener-page .input-field {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+}
+
+.ats-screener-page .input-field:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.ats-screener-page .analyze-btn {
+  padding: 16px 40px;
+  background: var(--student-blue-dark);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ats-screener-page .analyze-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.ats-screener-page .analyze-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ats-screener-page .analyze-btn.secondary {
+  background: var(--student-blue-dark);
+  padding: 12px 25px;
+  font-size: 1rem;
+}
+
+/* ATS Results Section */
+.ats-screener-page .results-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ats-screener-page .results-section.empty {
+  justify-content: center;
+}
+
+.ats-screener-page .empty-state {
+  background: white;
+  padding: 60px 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.ats-screener-page .empty-state h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.ats-screener-page .empty-state p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.ats-screener-page .tips-list {
+  text-align: left;
+  max-width: 300px;
+  margin: 0 auto;
+  color: #666;
+}
+
+.ats-screener-page .tips-list li {
+  padding: 8px 0;
+}
+
+/* ATS Score Card */
+.ats-screener-page .score-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .score-card.excellent {
+  border-left: 5px solid #4CAF50;
+}
+
+.ats-screener-page .score-card.good {
+  border-left: 5px solid #2196F3;
+}
+
+.ats-screener-page .score-card.fair {
+  border-left: 5px solid #FF9800;
+}
+
+.ats-screener-page .score-card.poor {
+  border-left: 5px solid #f44336;
+}
+
+.ats-screener-page .score-circle {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.ats-screener-page .score-value {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.ats-screener-page .score-max {
+  font-size: 1.5rem;
+  color: #999;
+}
+
+.ats-screener-page .score-grade {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 10px;
+}
+
+.ats-screener-page .score-message {
+  color: #666;
+}
+
+/* ATS Breakdown Card */
+.ats-screener-page .breakdown-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .breakdown-card h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.ats-screener-page .breakdown-item {
+  display: grid;
+  grid-template-columns: 100px 1fr 60px;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.ats-screener-page .breakdown-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.ats-screener-page .breakdown-bar {
+  height: 12px;
+  background: #e1e5e9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ats-screener-page .breakdown-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.ats-screener-page .breakdown-score {
+  font-weight: 600;
+  color: #333;
+  text-align: right;
+}
+
+/* ATS Skills Card */
+.ats-screener-page .skills-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .skills-card h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.ats-screener-page .skills-section {
+  margin-bottom: 20px;
+}
+
+.ats-screener-page .skills-section h4 {
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.ats-screener-page .skills-hint {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.ats-screener-page .skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ats-screener-page .skill-tag {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  background: #e8f0fe;
+  color: #1967d2;
+}
+
+.ats-screener-page .skill-tag.matched {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.ats-screener-page .skill-tag.missing {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+/* ATS Feedback Card */
+.ats-screener-page .feedback-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .feedback-card h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.ats-screener-page .feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ats-screener-page .feedback-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  background: #f5f7fa;
+}
+
+.ats-screener-page .feedback-item.positive {
+  background: #e8f5e9;
+}
+
+.ats-screener-page .feedback-item.warning {
+  background: #fff8e1;
+}
+
+.ats-screener-page .feedback-item.negative {
+  background: #ffebee;
+}
+
+.ats-screener-page .feedback-item.improvement {
+  background: #e3f2fd;
+}
+
+.ats-screener-page .feedback-icon {
+  font-size: 1.2rem;
+}
+
+.ats-screener-page .feedback-message {
+  color: #333;
+}
+
+/* ATS Analysis Card */
+.ats-screener-page .analysis-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .analysis-card h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.ats-screener-page .analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.ats-screener-page .analysis-item {
+  text-align: center;
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.ats-screener-page .analysis-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.ats-screener-page .analysis-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+}
+
+/* ATS Skills Analyzer Section */
+.ats-screener-page .skills-analyzer-section {
+  margin-top: 60px;
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.ats-screener-page .skills-analyzer-section h2 {
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.ats-screener-page .skills-analyzer-section > p {
+  text-align: center;
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.ats-screener-page .analyzer-input {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ats-screener-page .extracted-skills {
+  margin-top: 30px;
+}
+
+.ats-screener-page .extracted-skills h4 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.ats-screener-page .skills-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.ats-screener-page .skill-category h5 {
+  color: #555;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1024px) {
+  .ats-screener-page .screener-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ats-screener-page .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .ats-screener-page .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .ats-screener-page .breakdown-item {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+  
+  .ats-screener-page .breakdown-score {
+    text-align: left;
+  }
+}
+
+/* ================================
+   ADMIN ANALYTICS PAGE STYLES
+   ================================ */
+.admin-analytics-page {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.admin-analytics-page .page-header {
+  margin-bottom: 30px;
+}
+
+.admin-analytics-page .page-header h1 {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.admin-analytics-page .page-header p {
+  color: #666;
+}
+
+.admin-analytics-page .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px;
+}
+
+.admin-analytics-page .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e1e5e9;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.admin-analytics-page .analytics-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.admin-analytics-page .analytics-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.admin-analytics-page .analytics-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.admin-analytics-page .analytics-section h3 {
+  color: #555;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.admin-analytics-page .chart-container {
+  height: 300px;
+}
+
+.admin-analytics-page .chart-container.large {
+  height: 400px;
+}
+
+/* Admin Funnel Grid */
+.admin-analytics-page .funnel-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.admin-analytics-page .funnel-chart-container {
+  height: 300px;
+}
+
+.admin-analytics-page .funnel-stats {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.admin-analytics-page .conversion-rates {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-analytics-page .rate-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.admin-analytics-page .rate-item.overall {
+  border-bottom: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-top: 10px;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.admin-analytics-page .rate-label {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.admin-analytics-page .rate-item.overall .rate-label {
+  color: white;
+}
+
+.admin-analytics-page .rate-value {
+  font-weight: 600;
+  color: #333;
+}
+
+.admin-analytics-page .rate-item.overall .rate-value {
+  color: white;
+  font-size: 1.25rem;
+}
+
+/* Admin Demand Grid */
+.admin-analytics-page .demand-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.admin-analytics-page .chart-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+/* Admin Locations List */
+.admin-analytics-page .locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-analytics-page .location-item {
+  display: grid;
+  grid-template-columns: 120px 1fr 50px;
+  align-items: center;
+  gap: 15px;
+}
+
+.admin-analytics-page .location-name {
+  font-size: 0.9rem;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-analytics-page .location-bar {
+  height: 8px;
+  background: #e1e5e9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.admin-analytics-page .location-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+.admin-analytics-page .location-count {
+  font-weight: 600;
+  color: #333;
+  text-align: right;
+}
+
+/* Admin Table */
+.admin-analytics-page .table-container {
+  overflow-x: auto;
+}
+
+.admin-analytics-page .analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-analytics-page .analytics-table th,
+.admin-analytics-page .analytics-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.admin-analytics-page .analytics-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #555;
+}
+
+.admin-analytics-page .analytics-table tr:hover {
+  background: #f8f9fa;
+}
+
+.admin-analytics-page .success-rate {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.admin-analytics-page .success-rate.excellent {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.admin-analytics-page .success-rate.good {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.admin-analytics-page .success-rate.fair {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.admin-analytics-page .success-rate.low {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* Admin Status Cards */
+.admin-analytics-page .status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.admin-analytics-page .status-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.admin-analytics-page .status-count {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.admin-analytics-page .status-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+@media (max-width: 1024px) {
+  .admin-analytics-page .funnel-grid,
+  .admin-analytics-page .demand-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-analytics-page .location-item {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}
+
+/* ================================
+   STUDENT ANALYTICS PAGE STYLES
+   ================================ */
+.student-analytics-page {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.student-analytics-page .page-header {
+  margin-bottom: 30px;
+}
+
+.student-analytics-page .page-header h1 {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.student-analytics-page .page-header p {
+  color: #666;
+}
+
+.student-analytics-page .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px;
+}
+
+.student-analytics-page .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e1e5e9;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.student-analytics-page .analytics-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+.student-analytics{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+/* Student Stats Grid */
+.student-analytics-page .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.student-analytics-page .stat-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #667eea;
+}
+
+.student-analytics-page .stat-card.success { border-left-color: #4CAF50; }
+.student-analytics-page .stat-card.info { border-left-color: #2196F3; }
+.student-analytics-page .stat-card.warning { border-left-color: #FF9800; }
+.student-analytics-page .stat-card.primary { border-left-color: #9C27B0; }
+.student-analytics-page .stat-card.danger { border-left-color: #f44336; }
+
+.student-analytics-page .stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.student-analytics-page .stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Student Chart Section */
+.student-analytics-page .chart-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.student-analytics-page .chart-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.student-analytics-page .chart-container {
+  height: 300px;
+}
+
+/* Student Distribution Grid */
+.student-analytics-page .distribution-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.student-analytics-page .pie-chart-container {
+  height: 300px;
+}
+.student-analytics h3{
+  color: #555;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.student-analytics-page .status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.student-analytics-page .status-item {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.student-analytics-page .status-name {
+  color: #333;
+  font-weight: 500;
+}
+
+.student-analytics-page .status-count {
+  text-align: center;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.student-analytics-page .status-percent {
+  text-align: right;
+  color: #888;
+}
+
+/* Student Metrics Section */
+.student-analytics-page .metrics-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.student-analytics-page .metrics-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.student-analytics-page .metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.student-analytics-page .metric-card {
+  text-align: center;
+  padding: 25px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.student-analytics-page .metric-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.student-analytics-page .metric-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.student-analytics-page .metric-value.highlight {
+  color: #667eea;
+}
+
+.student-analytics-page .metric-desc {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 10px;
+}
+
+/* Student Tips Section */
+.student-analytics-page .tips-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.student-analytics-page .tips-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.student-analytics-page .tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.student-analytics-page .tip-card {
+  padding: 25px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.student-analytics-page .tip-icon {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+}
+
+.student-analytics-page .tip-card h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.student-analytics-page .tip-card p {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.student-analytics-page .tip-link {
+  display: inline-block;
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.student-analytics-page .tip-link:hover {
+  text-decoration: underline;
+}
+
+/* Student Empty State */
+.student-analytics-page .empty-state {
+  background: white;
+  padding: 80px 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.student-analytics-page .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.student-analytics-page .empty-state h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.student-analytics-page .empty-state p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.student-analytics-page .btn-primary {
+  display: inline-block;
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .student-analytics-page .distribution-grid,
+  .student-analytics-page .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .student-analytics-page .metric-value {
+    font-size: 2rem;
+  }
+}
+
+/* ================================
+   COMPANY ANALYTICS PAGE STYLES
+   ================================ */
+.company-analytics-page {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.company-analytics-page .page-header {
+  margin-bottom: 30px;
+}
+
+.company-analytics-page .page-header h1 {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.company-analytics-page .page-header p {
+  color: #666;
+}
+
+.company-analytics-page .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px;
+}
+
+.company-analytics-page .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e1e5e9;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.company-analytics-page .analytics-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Company Stats Grid */
+.company-analytics-page .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.company-analytics-page .stat-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.company-analytics-page .stat-card.primary {
+  border-top: 4px solid #667eea;
+}
+
+.company-analytics-page .stat-card.info {
+  border-top: 4px solid #2196F3;
+}
+
+.company-analytics-page .stat-card.success {
+  border-top: 4px solid #4CAF50;
+}
+
+.company-analytics-page .stat-card.highlight {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.company-analytics-page .stat-card.highlight .stat-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.company-analytics-page .stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.company-analytics-page .stat-card.highlight .stat-value {
+  color: white;
+}
+
+.company-analytics-page .stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Company Funnel Section */
+.company-analytics-page .funnel-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.company-analytics-page .funnel-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.company-analytics-page .funnel-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.company-analytics-page .funnel-chart {
+  height: 300px;
+}
+
+.company-analytics-page .funnel-breakdown h3 {
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.company-analytics-page .breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.company-analytics-page .breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.company-analytics-page .status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.company-analytics-page .status-dot.applied { background: #2196F3; }
+.company-analytics-page .status-dot.shortlisted { background: #FF9800; }
+.company-analytics-page .status-dot.interview { background: #9C27B0; }
+.company-analytics-page .status-dot.offer { background: #00BCD4; }
+.company-analytics-page .status-dot.selected { background: #4CAF50; }
+.company-analytics-page .status-dot.placed { background: #2E7D32; }
+.company-analytics-page .status-dot.rejected { background: #f44336; }
+
+.company-analytics-page .status-name {
+  flex: 1;
+  color: #333;
+}
+
+.company-analytics-page .status-count {
+  font-weight: 600;
+  color: #667eea;
+}
+
+/* Company Drives Section */
+.company-analytics-page .drives-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.company-analytics-page .drives-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.company-analytics-page .drives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.company-analytics-page .drive-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.company-analytics-page .drive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.company-analytics-page .drive-header h3 {
+  color: #333;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.company-analytics-page .drive-status {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.company-analytics-page .drive-status.pending {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.company-analytics-page .drive-status.approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.company-analytics-page .drive-status.closed {
+  background: #f5f5f5;
+  color: #616161;
+}
+
+.company-analytics-page .drive-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.company-analytics-page .drive-stat {
+  text-align: center;
+}
+
+.company-analytics-page .stat-num {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.company-analytics-page .stat-num.success {
+  color: #4CAF50;
+}
+
+.company-analytics-page .drive-stat .stat-label {
+  font-size: 0.8rem;
+}
+
+.company-analytics-page .drive-date {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* Company ATS Section */
+.company-analytics-page .ats-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.company-analytics-page .ats-card {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  padding: 25px;
+  border-radius: 12px;
+}
+
+.company-analytics-page .ats-icon {
+  font-size: 3rem;
+}
+
+.company-analytics-page .ats-content {
+  flex: 1;
+}
+
+.company-analytics-page .ats-content h3 {
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.company-analytics-page .ats-content p {
+  color: #666;
+  margin: 0;
+}
+
+.company-analytics-page .ats-btn {
+  padding: 12px 25px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Company Empty State */
+.company-analytics-page .empty-state {
+  background: white;
+  padding: 80px 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+.company-analytics-page .empty-state .btn{
+  display: inline-block;
+  padding: 10px;
+  width:130px ;
+  max-width:auto;
+  background: var(--student-blue);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.company-analytics-page .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.company-analytics-page .empty-state h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.company-analytics-page .empty-state p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.company-analytics-page .btn-primary {
+  display: inline-block;
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-left: 0;
+  width: auto;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.company-analytics-page .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 1024px) {
+  .company-analytics-page .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .company-analytics-page .funnel-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .company-analytics-page .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .company-analytics-page .ats-card {
+    flex-direction: column;
+    text-align: center;
+  }
+}

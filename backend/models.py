@@ -26,7 +26,7 @@ class Student(db.Model):
     year=db.Column(db.Integer,nullable=False)
     resume_url=db.Column(db.String(500))
     is_blacklisted=db.Column(db.Boolean,default=False)
-    applications=db.relationship('Application',back_populates='student',lazy=True)#confusion on applications and backref/back_populates
+    applications=db.relationship('Application',back_populates='student',lazy=True)
     
     def __repr__(self):
         return f'<Student {self.full_name} - {self.roll_number}>'

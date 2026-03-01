@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from celery_app import celery
 from models import *
-from utils.notifications import send_email, send_gchat, send_sms
+from utils.notifications import send_gchat
 
 try:
     from reportlab.lib.pagesizes import letter
@@ -39,10 +39,10 @@ def _month_range(target_date):
     return start, end
 
 
-def _send_export_ready_email(email, file_path, job_type):
-    subject = "Your export is ready"
-    body = f"Your {job_type} export is complete. File: {file_path}"
-    send_email(email, subject, body)
+def _send_export_ready_notification(file_path, job_type):
+    """Send GChat notification when export is ready."""
+    gchat_message = f"📊 Export Ready: {job_type} export completed successfully. File: {file_path}"
+    send_gchat(os.getenv("GCHAT_WEBHOOK_URL"), gchat_message)
 
 
 @celery.task(name="tasks.send_interview_reminders")
@@ -66,12 +66,10 @@ def send_interview_reminders():
             continue
 
         message = (
-            f"Interview reminder: {drive.job_title} at {drive.company.company_name} on "
-            f"{app.interview_schedule.isoformat()}"
+            f"🔔 Interview Reminder: {drive.job_title} at {drive.company.company_name} on "
+            f"{app.interview_schedule.isoformat()} for {student.full_name}"
         )
-        send_email(student.email, "Interview Reminder", message)
         send_gchat(os.getenv("GCHAT_WEBHOOK_URL"), message)
-        send_sms(os.getenv("SMS_PHONE_NUMBER"), message)
 
         app.interview_reminder_sent_at = now
 
@@ -134,7 +132,7 @@ def export_student_applications(job_id):
         job.completed_at = datetime.utcnow()
         db.session.commit()
 
-        _send_export_ready_email(student.email, file_path, "student applications")
+        _send_export_ready_notification(file_path, "student applications")
     except Exception as exc:
         job.status = "failed"
         job.error = str(exc)
@@ -200,11 +198,26 @@ def export_company_applications(job_id):
         job.completed_at = datetime.utcnow()
         db.session.commit()
 
-        _send_export_ready_email(company.email, file_path, "company applications")
+        _send_export_ready_notification(file_path, "company applications")
     except Exception as exc:
         job.status = "failed"
         job.error = str(exc)
         db.session.commit()
+
+
+def _send_report_gchat(company_name, report_type, month, year, stats):
+    """Send formatted report summary to GChat."""
+    message = f"""📈 *{report_type} - {company_name}*
+📅 Period: {month:02d}/{year}
+
+📊 *Summary:*
+• Total Applications: {stats.get('total_applications', 0)}
+• Shortlisted: {stats.get('shortlisted', 0)}
+• Interviews: {stats.get('interview', 0)}
+• Offers: {stats.get('offer', 0)}
+• Placed: {stats.get('placed', 0)}
+• Rejected: {stats.get('rejected', 0)}"""
+    send_gchat(os.getenv("GCHAT_WEBHOOK_URL"), message)
 
 
 def _build_company_report_data(company, start_date, end_date):
@@ -403,10 +416,13 @@ def generate_monthly_placement_reports():
             report.completed_at = datetime.utcnow()
             db.session.commit()
 
-            send_email(
-                company.email,
-                "Monthly placement report ready",
-                f"Your placement report for {target_date.month:02d}/{target_date.year} is ready.",
+            # Send GChat notification with report summary
+            _send_report_gchat(
+                company.company_name,
+                "Monthly Placement Report",
+                target_date.month,
+                target_date.year,
+                stats
             )
         except Exception as exc:
             report.status = "failed"
@@ -441,9 +457,7 @@ def send_deadline_reminders():
                 f"is approaching: {drive.application_deadline.strftime('%Y-%m-%d %H:%M')}. "
                 f"Apply soon!"
             )
-            send_email(student.email, "Application Deadline Reminder", message)
             send_gchat(os.getenv("GCHAT_WEBHOOK_URL"), message)
-            send_sms(os.getenv("SMS_PHONE_NUMBER"), message)
 
     db.session.commit()
 
@@ -509,12 +523,12 @@ def generate_admin_monthly_report():
     stats = _build_admin_report_data(start_date, end_date)
     html = _render_admin_report_html(target_date.month, target_date.year, stats)
 
-    # Send to all admins
-    admins = Admin.query.all()
-    for admin in admins:
-        send_email(
-            admin.email,
-            f"Monthly Activity Report - {target_date.month:02d}/{target_date.year}",
-            "Please find the attached monthly activity report.",
-            html_body=html,
-        )
+    # Send GChat notification for admin report
+    gchat_message = f"""📈 *Monthly Activity Report - Institute*
+📅 Period: {target_date.month:02d}/{target_date.year}
+
+📊 *Summary:*
+• Drives Conducted: {stats['drives_conducted']}
+• Students Applied: {stats['students_applied']}
+• Students Selected: {stats['students_selected']}"""
+    send_gchat(os.getenv("GCHAT_WEBHOOK_URL"), gchat_message)

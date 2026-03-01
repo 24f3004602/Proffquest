@@ -1,7 +1,10 @@
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required
 from models import *
 from utils.decorators import role_required
+from utils.cache import (
+    cache_response, CACHE_PREFIXES, invalidate_company_cache,
+    invalidate_student_cache, invalidate_drives_cache
+)
 from flask import request
 from sqlalchemy import or_
     
@@ -22,6 +25,7 @@ class ApproveCompany(Resource):
             company=Company.query.get_or_404(company_id)
             company.status='approved'
             db.session.commit()
+            invalidate_company_cache(company_id)
             return {'message':'Company approved successfully'},200
         except Exception as e:
             db.session.rollback()
@@ -34,6 +38,7 @@ class RejectCompany(Resource):
             company=Company.query.get_or_404(company_id)
             company.status='rejected'
             db.session.commit()
+            invalidate_company_cache(company_id)
             return {'message':'Company rejected successfully'},200
         except Exception as e:
             db.session.rollback()
@@ -41,6 +46,7 @@ class RejectCompany(Resource):
     
 class AdminCompaniesList(Resource):
     @role_required('admin')
+    @cache_response(CACHE_PREFIXES['companies'], ttl_type='short')
     def get(self):
         companies=Company.query.all()
         return [
@@ -62,6 +68,7 @@ class BlacklistCompany(Resource):
         company=Company.query.get_or_404(company_id)
         company.is_blacklisted=True
         db.session.commit()
+        invalidate_company_cache(company_id)
         return {'message':'Company blacklisted successfully'},200
 
 class ActiveCompany(Resource):
@@ -74,6 +81,7 @@ class ActiveCompany(Resource):
 
 class SearchCompanies(Resource):
     @role_required('admin')
+    @cache_response(CACHE_PREFIXES['search'], ttl_type='short')
     def get(self):
         query = request.args.get('q', '')
         companies = Company.query.filter(
@@ -98,6 +106,7 @@ class SearchCompanies(Resource):
 
 class SearchStudents(Resource):
     @role_required('admin')
+    @cache_response(CACHE_PREFIXES['search'], ttl_type='short')
     def get(self):
         query = request.args.get('q', '')
         students = Student.query.filter(
@@ -123,6 +132,7 @@ class SearchStudents(Resource):
 
 class AdminPlacementDrives(Resource):
     @role_required('admin')
+    @cache_response(CACHE_PREFIXES['drives'], ttl_type='short')
     def get(self):
         drives = Placement_drive.query.all()
         return [
@@ -149,6 +159,7 @@ class ApprovePlacementDrive(Resource):
         drive.status='approved'
         drive.is_approved=True
         db.session.commit()
+        invalidate_drives_cache()
         return {'message':'Placement drive approved successfully'},200
 
 class RejectPlacementDrive(Resource):
@@ -158,6 +169,7 @@ class RejectPlacementDrive(Resource):
         drive.status='rejected'
         drive.is_approved=False
         db.session.commit()
+        invalidate_drives_cache()
         return {'message':'Placement drive rejected successfully'},200
 
 class AdminApplications(Resource):

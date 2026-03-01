@@ -9,6 +9,63 @@
       </div>
     </div>
 
+    <!-- Statistics Section -->
+    <div class="stats-section" v-if="stats">
+      <div class="container">
+        <h2 class="section-title">Placement Statistics</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">{{ stats.summary?.total_placements || 0 }}</div>
+            <div class="stat-label">Students Placed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ stats.summary?.total_drives || 0 }}</div>
+            <div class="stat-label">Placement Drives</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ stats.summary?.active_companies || 0 }}</div>
+            <div class="stat-label">Active Companies</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ stats.summary?.registered_students || 0 }}</div>
+            <div class="stat-label">Registered Students</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section" v-if="stats && stats.monthly_trends">
+      <div class="container">
+        <h2 class="section-title">Monthly Placement Trends</h2>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3>Placements Over Time</h3>
+            <div class="chart-container">
+              <Line v-if="placementChartData" :data="placementChartData" :options="chartOptions" />
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Drives vs Applications</h3>
+            <div class="chart-container">
+              <Bar v-if="drivesChartData" :data="drivesChartData" :options="chartOptions" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Sectors -->
+        <div class="sectors-section" v-if="stats.top_sectors && stats.top_sectors.length">
+          <h3>Top Hiring Sectors</h3>
+          <div class="sectors-grid">
+            <div class="sector-card" v-for="sector in stats.top_sectors" :key="sector.sector">
+              <div class="sector-name">{{ sector.sector }}</div>
+              <div class="sector-count">{{ sector.count }} drives</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="content-section">
       <div class="container">
         <section class="about-section">
@@ -24,16 +81,17 @@
               <p>Advanced algorithms to match the right candidates with the right opportunities.</p>
             </div>
             <div class="feature-item">
-              <h3>Comprehensive Placement Opportunities</h3>
-              <p>Access to a wide range of job openings from top companies.</p>
+              <h3>ATS Resume Screener</h3>
+              <p>Analyze your resume against job descriptions to improve your chances.</p>
+              <router-link to="/ats-screener" class="feature-link">Try Now</router-link>
             </div>
             <div class="feature-item">
               <h3>User-Friendly Interface</h3>
               <p>Intuitive design that makes navigation and application simple.</p>
             </div>
             <div class="feature-item">
-              <h3>Secure and Reliable Platform</h3>
-              <p>Enterprise-grade security to protect your data and privacy.</p>
+              <h3>Real-time Analytics</h3>
+              <p>Track placement trends, job demand, and application funnels.</p>
             </div>
           </div>
         </section>
@@ -46,7 +104,8 @@
                 <li>Access to Job Listings</li>
                 <li>Resume Builder and Management</li>
                 <li>Application Tracking System</li>
-                <li>Networking Opportunities</li>
+                <li>ATS Resume Checker</li>
+                <li>Personal Analytics Dashboard</li>
               </ul>
             </div>
             <div class="feature-item">
@@ -54,8 +113,9 @@
               <ul class="feature-list">
                 <li>Post Job Openings</li>
                 <li>Search and Filter Candidates</li>
-                <li>Manage Applications</li>
-                <li>Branding and Promotion</li>
+                <li>Bulk ATS Screening</li>
+                <li>Analytics & Reporting</li>
+                <li>Interview Management</li>
               </ul>
             </div>
           </div>
@@ -75,3 +135,101 @@
   </div>
 </template>
 
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { Line, Bar } from 'vue-chartjs'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js'
+import api from '@/services/api'
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
+
+const stats = ref(null)
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+    },
+  },
+}
+
+const placementChartData = computed(() => {
+  if (!stats.value?.monthly_trends) return null
+  
+  return {
+    labels: stats.value.monthly_trends.map(m => m.month),
+    datasets: [
+      {
+        label: 'Placements',
+        data: stats.value.monthly_trends.map(m => m.placements),
+        borderColor: '#4CAF50',
+        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+        fill: true,
+        tension: 0.4,
+      },
+    ],
+  }
+})
+
+const drivesChartData = computed(() => {
+  if (!stats.value?.monthly_trends) return null
+  
+  return {
+    labels: stats.value.monthly_trends.map(m => m.month),
+    datasets: [
+      {
+        label: 'Drives',
+        data: stats.value.monthly_trends.map(m => m.drives),
+        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+      },
+      {
+        label: 'Applications',
+        data: stats.value.monthly_trends.map(m => m.applications),
+        backgroundColor: 'rgba(255, 159, 64, 0.7)',
+      },
+    ],
+  }
+})
+
+const fetchStats = async () => {
+  try {
+    const response = await api.get('/public/stats')
+    stats.value = response.data
+  } catch (err) {
+    console.error('Failed to fetch stats:', err)
+  }
+}
+
+onMounted(() => {
+  fetchStats()
+})
+</script>

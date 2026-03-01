@@ -7,29 +7,13 @@ from flask_cors import CORS
 
 from models import db
 from celery_app import make_celery
-from resources.auth import Login, StudentRegister, CompanyRegister
-from resources.admin import (
-    ApproveCompany, RejectCompany, BlacklistCompany, AdminCompaniesList,
-    AdminDashboardStats, ActiveCompany, SearchCompanies, SearchStudents,
-    AdminPlacementDrives, ApprovePlacementDrive, RejectPlacementDrive,
-    AdminApplications, BlacklistStudent, ActivateStudent,
-    AdminStudentProfile, AdminStudentApplications,
-)
-from resources.company import (
-    CompanyDashboard, CreatePlacementDrive, CompanyDrives, DriveApplicants,
-    UpdateApplicationStatus, UpdateDriveStatus, CompanyInterviews,
-    CompanySelectedStudents, CompanyProfile, CompanySubmitApproval,
-    CompanyResults, CompanyStudentProfile, CompanyStudentApplications,
-)
-from resources.student import (
-    StudentDashboard, StudentProfile, StudentDrives, StudentDriveDetail,
-    StudentApply, StudentApplications,
-)
-from resources.exports import (
-    CompanyExportApplications, CompanyExportJobs, CompanyExportDownload,
-    CompanyReportsList, CompanyReportDownload,
-    StudentExportApplications, StudentExportJobs, StudentExportDownload,
-)
+from resources.auth import *
+from resources.admin import *
+from resources.company import *
+from resources.student import *
+from resources.exports import *
+from resources.analytics import *
+from resources.resume_screener import *
 
 # ---------------------------------------------------------------------------
 # App & config
@@ -54,7 +38,7 @@ CORS(app, supports_credentials=True)
 # Celery
 # ---------------------------------------------------------------------------
 celery = make_celery(app)
-import tasks  # noqa: E402, F401  — registers Celery task functions
+import tasks  
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -112,6 +96,22 @@ api.add_resource(StudentApplications, "/api/student/applications")
 api.add_resource(StudentExportApplications, "/api/student/exports")
 api.add_resource(StudentExportJobs, "/api/student/exports/jobs")
 api.add_resource(StudentExportDownload, "/api/student/exports/<int:job_id>/download")
+
+# Public API (no auth required)
+api.add_resource(PublicStats, "/api/public/stats")
+
+# Analytics
+api.add_resource(AnalyticsPlacementTrends, "/api/analytics/placement-trends")
+api.add_resource(AnalyticsJobDemand, "/api/analytics/job-demand")
+api.add_resource(AnalyticsApplicationFunnel, "/api/analytics/funnel")
+api.add_resource(AnalyticsCompanyPerformance, "/api/company/analytics")
+api.add_resource(AnalyticsStudentPerformance, "/api/student/analytics")
+
+# ATS Resume Screener
+api.add_resource(ATSResumeScreener, "/api/ats/screen")
+api.add_resource(ATSStudentResumeCheck, "/api/student/ats/check/<int:drive_id>")
+api.add_resource(ATSCompanyBulkScreen, "/api/company/ats/bulk-screen/<int:drive_id>")
+api.add_resource(ATSSkillsAnalyzer, "/api/ats/analyze-skills")
 
 # ---------------------------------------------------------------------------
 # Create tables

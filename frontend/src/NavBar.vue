@@ -12,6 +12,7 @@
       <div class="nav-links">
         <div v-if="!isLoggedIn" class="nav-menu">
           <router-link to="/" class="nav-link">Home</router-link>
+          <router-link to="/ats-screener" class="nav-link">ATS Screener</router-link>
           <router-link to="/login" class="nav-link">Login</router-link>
           <router-link to="/register" class="nav-link">Register</router-link>
         </div>
@@ -22,6 +23,7 @@
           <router-link to="/admin/companies" class="nav-link">Companies</router-link>
           <router-link to="/admin/drives" class="nav-link">Placement Drives</router-link>
           <router-link to="/admin/applications" class="nav-link">Applications</router-link>
+          <router-link to="/admin/analytics" class="nav-link">Analytics</router-link>
           <button class="nav-link nav-link-btn" @click="logout"> Logout</button>
         </div>
         <!-- Company Navigation -->
@@ -31,6 +33,7 @@
           <router-link to="/company/applications" class="nav-link">Applications</router-link>
           <router-link to="/company/interviews" class="nav-link">Interviews</router-link>
           <router-link to="/company/results" class="nav-link">Results</router-link>
+          <router-link to="/company/analytics" class="nav-link">Analytics</router-link>
           <button class="nav-link nav-link-btn" @click="logout"> Logout</button>
         </div>
         <!-- Student Navigation -->
@@ -39,6 +42,7 @@
           <router-link to="/student/drives" class="nav-link"> Placement Drives</router-link>
           <router-link to="/student/applications" class="nav-link"> My Applications</router-link>
           <router-link to="/student/history" class="nav-link"> Placement History</router-link>
+          <router-link to="/student/analytics" class="nav-link"> Analytics</router-link>
           <router-link to="/student/profile" class="nav-link"> My Profile</router-link>
           <button class="nav-link nav-link-btn" @click="logout"> Logout</button>
         </div>
@@ -48,18 +52,10 @@
 </template>
 
 <script>
-import api from '@/services/api'
 import { authState } from '@/stores/auth'
 
 export default {
   name: 'NavBar',
-  data() {
-    return {
-      companyName: '',
-      studentSearch: '',
-      showProfileMenu: false
-    }
-  },
   computed: {
     isLoggedIn() {
       return authState.isLoggedIn
@@ -68,36 +64,10 @@ export default {
       return authState.role
     }
   },
-  watch: {
-    userRole: {
-      immediate: true,
-      handler(newRole) {
-        if (newRole === 'company' && this.isLoggedIn) {
-          this.fetchCompanyProfile()
-        }
-      }
-    },
-    $route() {
-      this.showProfileMenu = false
-    }
-  },
   methods: {
     logout() {
       authState.clearAuth()
-      this.companyName = ''
-      this.showProfileMenu = false
       this.$router.push('/')
-    },
-    toggleProfileMenu() {
-      this.showProfileMenu = !this.showProfileMenu
-    },
-    async fetchCompanyProfile() {
-      try {
-        const { data } = await api.get('/company/profile')
-        this.companyName = data.company_name
-      } catch {
-        this.companyName = ''
-      }
     }
   }
 }

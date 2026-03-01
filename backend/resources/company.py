@@ -1,9 +1,13 @@
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity
 from models import db, Company, Placement_drive, Application, Student, Drive_eligibility
 from datetime import datetime
 from utils.decorators import role_required
+from utils.cache import (
+    cache_response, CACHE_PREFIXES, invalidate_drives_cache,
+    invalidate_company_cache, invalidate_application_cache
+)
 import json
 
 class CompanyDashboard(Resource):
@@ -157,6 +161,7 @@ class CreatePlacementDrive(Resource):
             db.session.add(eligibility)
 
         db.session.commit()
+        invalidate_drives_cache()
         return {'message': 'Placement drive created successfully', 'drive_id': new_drive.id}, 201
 
 class CompanyDrives(Resource):
@@ -287,6 +292,7 @@ class UpdateApplicationStatus(Resource):
         application.interview_notes = feedback
 
         db.session.commit()
+        invalidate_application_cache()
         return {'message': 'Application status updated successfully'}
 
 class UpdateDriveStatus(Resource):

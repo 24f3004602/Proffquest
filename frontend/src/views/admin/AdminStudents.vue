@@ -111,10 +111,6 @@ export default {
       profileModal: { visible: false, data: {}, loading: false, error: null, applications: [], appsLoading: false, appsError: null }
     }
   },
-      formatDate(d) {
-        if (!d) return '—'
-        return new Date(d).toLocaleDateString()
-      },
   async mounted() {
     await this.loadStudents()
   },
@@ -176,6 +172,10 @@ export default {
     },
     closeProfile() {
       this.profileModal = { visible: false, data: {}, loading: false, error: null, applications: [], appsLoading: false, appsError: null }
+    },
+    formatDate(d) {
+      if (!d) return '—'
+      return new Date(d).toLocaleDateString()
     }
   }
 }
