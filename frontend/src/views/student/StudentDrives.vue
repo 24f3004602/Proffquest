@@ -59,25 +59,26 @@
             </div>
             <div class="drive-badges">
               <span class="status-badge" :class="getDriveStatusClass(drive)">{{ getDriveStatusLabel(drive) }}</span>
-              <span v-if="!drive.eligible" class="status-badge status-rejected">Not Eligible</span>
+              <span v-if="!isProfileComplete" class="status-badge status-rejected">Profile Incomplete</span>
             </div>
           </div>
 
           <div class="drive-meta">
+            <span>Role: {{ drive.role || drive.job_title }}</span>
             <span>CTC / Stipend: {{ drive.package_offered }}</span>
-            <span>Eligibility: {{ formatEligibility(drive) }}</span>
+            <span>Job Type: {{ drive.job_type || 'Full-time' }}</span>
+            <span>Location: {{ drive.location }}</span>
             <span>Deadline: {{ formatDate(drive.application_deadline) }}</span>
           </div>
 
           <div class="drive-description" v-if="expandedDrive === drive.id">
             <p><strong>Description:</strong> {{ drive.job_description }}</p>
-            <div v-if="drive.eligibility && drive.eligibility.length > 0" class="eligibility-info">
+            <p v-if="drive.skills_required"><strong>Skills Required:</strong> {{ drive.skills_required }}</p>
+            <div  class="eligibility-info">
               <p><strong>Eligibility Criteria:</strong></p>
               <ul>
                 <li v-for="(el, idx) in drive.eligibility" :key="idx">
                   Branch: {{ el.branch }} | Min CGPA: {{ el.min_cgpa }}
-                  <span v-if="el.passing_year"> | Year: {{ el.passing_year }}</span>
-                  <span v-if="el.backlog_allowed"> | Backlogs Allowed</span>
                   <span v-if="el.additional_criteria"> | {{ el.additional_criteria }}</span>
                 </li>
               </ul>
@@ -113,6 +114,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDate, driveStatusLabel, driveStatusClass } from '@/utils/formatters'
 
 export default {
   name: 'StudentDrives',
@@ -121,6 +123,7 @@ export default {
       loading: true,
       error: null,
       drives: [],
+      profile: {},
       searchQuery: '',
       cgpaFilter: '',
       branchFilter: '',
@@ -130,6 +133,10 @@ export default {
     }
   },
   computed: {
+    isProfileComplete() {
+      const requiredFields = ['full_name', 'email', 'roll_number', 'branch', 'cgpa', 'year', 'resume_url']
+      return requiredFields.every(key => this.profile && this.profile[key])
+    },
     filteredDrives() {
       let list = this.drives
       if (this.searchQuery) {
@@ -179,10 +186,10 @@ export default {
     }
   },
   async mounted() {
-    await this.fetchDrives()
+    await Promise.all([this.fetchDrives(), this.fetchProfile()])
   },
   methods: {
-    formatDate(d) { return new Date(d).toLocaleDateString() },
+    formatDate,
     toggleExpand(driveId) {
       this.expandedDrive = this.expandedDrive === driveId ? null : driveId
     },
@@ -194,31 +201,24 @@ export default {
       if (!drive.eligibility || drive.eligibility.length === 0) return true
       return drive.eligibility.some(el => el.branch === branch)
     },
-    formatEligibility(drive) {
-      if (!drive.eligibility || drive.eligibility.length === 0) return 'Open to all'
-      const minCgpa = Math.min(...drive.eligibility.map(el => el.min_cgpa || 0))
-      const branches = drive.eligibility.map(el => el.branch).filter(Boolean)
-      const branchText = branches.length ? branches.slice(0, 2).join(', ') : 'All branches'
-      return `CGPA ${minCgpa}+ • ${branchText}`
-    },
-    getDriveStatusLabel(drive) {
-      if (drive.deadline_passed) return 'Closed'
-      if (drive.already_applied) return 'Applied'
-      return 'Not Applied'
-    },
-    getDriveStatusClass(drive) {
-      if (drive.deadline_passed) return 'status-closed'
-      if (drive.already_applied) return 'status-applied'
-      return 'status-pending'
-    },
+    getDriveStatusLabel: driveStatusLabel,
+    getDriveStatusClass: driveStatusClass,
     canApply(drive) {
-      return drive.eligible && !drive.deadline_passed && !drive.already_applied
+      return this.isProfileComplete && !drive.deadline_passed && !drive.already_applied
     },
     applyDisabledReason(drive) {
+      if (!this.isProfileComplete) return 'Complete your profile before applying'
       if (drive.deadline_passed) return 'Deadline passed'
-      if (!drive.eligible) return 'Not eligible for this drive'
       if (drive.already_applied) return 'Already applied'
       return ''
+    },
+    async fetchProfile() {
+      try {
+        const { data } = await api.get('/student/profile')
+        this.profile = data || {}
+      } catch {
+        this.profile = {}
+      }
     },
     async fetchDrives() {
       try {

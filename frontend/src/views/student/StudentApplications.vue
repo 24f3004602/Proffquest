@@ -28,15 +28,9 @@
            
         </div>
         <div class="export-app-btn">
-        <button class="btn btn-primary" @click="exportApplications" :disabled="exportLoading || exportJob">
-          {{ exportLoading ? 'Starting Export...' : exportJob ? 'Export in Progress...' : 'Export to CSV' }}
+        <button class="btn btn-primary" @click="handleExportAction" :disabled="exportLoading || isExportInProgress">
+          {{ exportButtonText }}
         </button>
-        <!-- New: Export status and download -->
-        <div v-if="exportJob" class="export-status">
-          <p>Export Status: {{ exportJob.status }}</p>
-          <p v-if="exportJob.error">Error: {{ exportJob.error }}</p>
-          <a v-if="exportJob.status === 'completed' && exportJob.file_path" :href="downloadUrl" class="btn btn-success" download>Download CSV</a>
-        </div>
         </div>
       </div>
 
@@ -50,7 +44,6 @@
               <th>Role</th>
               <th>Applied On</th>
               <th>Status</th>
-              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -60,9 +53,6 @@
               <td>{{ formatDate(app.applied_at) }}</td>
               <td>
                 <span :class="'status-badge status-' + app.status.toLowerCase()">{{ app.status }}</span>
-              </td>
-              <td class="student-table-actions">
-                <button class="btn btn-ghost" @click="viewApplication">View</button>
               </td>
             </tr>
           </tbody>
@@ -91,6 +81,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDate, formatDateTime } from '@/utils/formatters'
 
 export default {
   name: 'StudentApplications',
@@ -102,7 +93,8 @@ export default {
       statusFilter: '',
       exportLoading: false,
       exportJob: null,
-      exportInterval: null
+      exportInterval: null,
+      autoDownloadPending: false
     }
   },
   computed: {
@@ -113,25 +105,22 @@ export default {
     interviewApps() {
       return this.applications.filter(a => a.interview_schedule && (a.status === 'Shortlisted' || a.status === 'Interview'))
     },
-    selectedApps() {
-      return this.applications.filter(a => a.status === 'Selected')
+    isExportInProgress() {
+      return this.exportJob && this.exportJob.status !== 'completed' && this.exportJob.status !== 'failed'
     },
-    downloadUrl() {
-      return this.exportJob ? `${api.defaults.baseURL}/exports/student/download/${this.exportJob.id}` : ''
+    exportButtonText() {
+      if (this.exportLoading) return 'Starting Download...'
+      if (this.isExportInProgress) return 'Preparing CSV...'
+      if (this.exportJob && this.exportJob.status === 'completed' && this.exportJob.file_path) return 'Download CSV'
+      return 'Download CSV'
     }
   },
   async mounted() {
     await this.fetchApplications()
   },
   methods: {
-    formatDate(d) { return new Date(d).toLocaleDateString() },
-    formatDateTime(d) { return new Date(d).toLocaleString() },
-    viewApplication() {
-      this.$router.push('/student/applications')
-    },
-    countByStatus(status) {
-      return this.applications.filter(a => a.status === status).length
-    },
+    formatDate,
+    formatDateTime,
     async fetchApplications() {
       try {
         const { data } = await api.get('/student/applications')
@@ -145,31 +134,80 @@ export default {
     async exportApplications() {
       this.exportLoading = true
       try {
-        const { data } = await api.post('/exports/student/applications')
-        this.exportJob = { id: data.job_id, status: 'queued' }
-        this.pollExportStatus()
+        this.autoDownloadPending = true
+        const { data } = await api.post('/student/exports')
+        this.exportJob = {
+          id: data.job_id,
+          status: data.status || 'queued',
+          file_path: data.file_path || null,
+          error: data.error || null
+        }
+
+        if (this.exportJob.status === 'completed' && this.exportJob.file_path) {
+          await this.downloadExport()
+          this.autoDownloadPending = false
+        } else if (this.exportJob.status !== 'failed') {
+          this.pollExportStatus()
+        } else {
+          this.autoDownloadPending = false
+        }
       } catch (err) {
+        this.autoDownloadPending = false
         this.error = err.response?.data?.message || 'Failed to start export'
       } finally {
         this.exportLoading = false
       }
     },
+    async handleExportAction() {
+      if (this.exportJob && this.exportJob.status === 'completed' && this.exportJob.file_path) {
+        await this.downloadExport()
+        return
+      }
+      await this.exportApplications()
+    },
     async pollExportStatus() {
+      if (this.exportInterval) clearInterval(this.exportInterval)
       this.exportInterval = setInterval(async () => {
         try {
-          const { data } = await api.get('/exports/student/jobs')
+          const { data } = await api.get('/student/exports/jobs')
           const job = data.jobs.find(j => j.id === this.exportJob.id)
           if (job) {
             this.exportJob = job
             if (job.status === 'completed' || job.status === 'failed') {
               clearInterval(this.exportInterval)
+              this.exportInterval = null
+              if (job.status === 'completed' && job.file_path && this.autoDownloadPending) {
+                await this.downloadExport()
+              }
+              this.autoDownloadPending = false
             }
           }
         } catch (err) {
+          this.autoDownloadPending = false
           this.error = 'Failed to check export status'
           clearInterval(this.exportInterval)
+          this.exportInterval = null
         }
       }, 5000) // Poll every 5 seconds
+    },
+    async downloadExport() {
+      if (!this.exportJob) return
+      try {
+        const response = await api.get(`/student/exports/${this.exportJob.id}/download`, {
+          responseType: 'blob'
+        })
+
+        const blobUrl = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.setAttribute('download', `student_applications_${this.exportJob.id}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(blobUrl)
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to download export file'
+      }
     }
   },
   beforeUnmount() {

@@ -24,53 +24,43 @@
       <div class="charts-section">
         <h2><i class="fas fa-chart-pie"></i> Data Visualization</h2>
         <div class="chart-container">
-          <div class="chart-card">
+          <div class="chart-card chart-card-enhanced">
             <h3><i class="fas fa-clipboard-list"></i> Applications by Status</h3>
-            <div class="chart-placeholder-content">
-              <div class="status-item">
-                <span class="status-label">Applied:</span>
-                <span class="status-value">{{ chartData.applied }}</span>
+            <div class="chart-summary-row">
+              <div class="summary-pill">
+                <span class="summary-label">Total</span>
+                <span class="summary-value">{{ totalApplications }}</span>
               </div>
-              <div class="status-item">
-                <span class="status-label">Shortlisted:</span>
-                <span class="status-value">{{ chartData.shortlisted }}</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Interview:</span>
-                <span class="status-value">{{ chartData.interview }}</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Offer:</span>
-                <span class="status-value">{{ chartData.offer }}</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Placed:</span>
-                <span class="status-value">{{ chartData.placed }}</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Selected (legacy):</span>
-                <span class="status-value">{{ chartData.selected }}</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Rejected:</span>
-                <span class="status-value">{{ chartData.rejected }}</span>
+            </div>
+            <div class="chart-placeholder-content chart-list">
+              <div v-for="item in applicationStatusItems" :key="item.key" class="status-row">
+                <div class="status-row-top">
+                  <span class="status-label">{{ item.label }}</span>
+                  <span class="status-value">{{ item.value }}</span>
+                </div>
+                <div class="status-progress-track">
+                  <div class="status-progress-fill" :style="{ width: getWidth(item.value, totalApplications) + '%' }"></div>
+                </div>
               </div>
             </div>
           </div>
-          <div class="chart-card">
+          <div class="chart-card chart-card-enhanced">
             <h3><i class="fas fa-building"></i> Companies by Status</h3>
-            <div class="chart-placeholder-content">
-              <div class="status-item">
-                <span class="status-label">Approved:</span>
-                <span class="status-value approved">{{ chartData.companiesApproved }}</span>
+            <div class="chart-summary-row">
+              <div class="summary-pill">
+                <span class="summary-label">Total</span>
+                <span class="summary-value">{{ totalCompanies }}</span>
               </div>
-              <div class="status-item">
-                <span class="status-label">Pending:</span>
-                <span class="status-value pending">{{ chartData.companiesPending }}</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Rejected:</span>
-                <span class="status-value rejected">{{ chartData.companiesRejected }}</span>
+            </div>
+            <div class="chart-placeholder-content chart-list">
+              <div v-for="item in companyStatusItems" :key="item.key" class="status-row">
+                <div class="status-row-top">
+                  <span class="status-label">{{ item.label }}</span>
+                  <span class="status-value" :class="item.className">{{ item.value }}</span>
+                </div>
+                <div class="status-progress-track">
+                  <div class="status-progress-fill" :style="{ width: getWidth(item.value, totalCompanies) + '%' }"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -129,13 +119,9 @@
 
 <script>
 import api from '@/services/api'
-import NavBar from '@/NavBar.vue'
 
 export default {
   name: 'AdminDashboard',
-  components: {
-    NavBar
-  },
   data() {
     return {
       stats: {},
@@ -160,10 +146,6 @@ export default {
     }
   },
   async mounted() {
-    if (!localStorage.getItem('access_token')) {
-      this.$router.push('/login');
-      return;
-    }
     await this.loadStats()
     await this.loadChartData()
   },
@@ -174,9 +156,37 @@ export default {
         ...m,
         value: this.stats[m.key] ?? 0
       }))
+    },
+    applicationStatusItems() {
+      return [
+        { key: 'applied', label: 'Applied', value: this.chartData.applied },
+        { key: 'shortlisted', label: 'Shortlisted', value: this.chartData.shortlisted },
+        { key: 'interview', label: 'Interview', value: this.chartData.interview },
+        { key: 'offer', label: 'Offer', value: this.chartData.offer },
+        { key: 'placed', label: 'Placed', value: this.chartData.placed },
+        { key: 'selected', label: 'Selected (legacy)', value: this.chartData.selected },
+        { key: 'rejected', label: 'Rejected', value: this.chartData.rejected }
+      ]
+    },
+    companyStatusItems() {
+      return [
+        { key: 'approved', label: 'Approved', value: this.chartData.companiesApproved, className: 'approved' },
+        { key: 'pending', label: 'Pending', value: this.chartData.companiesPending, className: 'pending' },
+        { key: 'rejected', label: 'Rejected', value: this.chartData.companiesRejected, className: 'rejected' }
+      ]
+    },
+    totalApplications() {
+      return this.applicationStatusItems.reduce((sum, item) => sum + item.value, 0)
+    },
+    totalCompanies() {
+      return this.companyStatusItems.reduce((sum, item) => sum + item.value, 0)
     }
   },
   methods: {
+    getWidth(value, total) {
+      if (!total) return 0
+      return Math.round((value / total) * 100)
+    },
     async loadStats() {
       try {
         const res = await api.get('/admin/dashboard_stats')

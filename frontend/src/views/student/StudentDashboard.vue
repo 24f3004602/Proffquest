@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div class="student-section">
+        <div class="card student-section">
           <div class="section-header">
             <h3>Recommended / Latest Drives</h3>
             <button class="btn" @click="$router.push('/student/drives')">View All</button>
@@ -115,17 +115,34 @@
         </div>
         <div class="card student-side-alert">
           <div class="side-card-header">
-            <h4>Alerts</h4>
+            <h4>Alerts & Notifications</h4>
           </div>
-          <ul class="alert-list">
-          <div class="alert-items">
-            <div class="alert-items-text">
-            <li v-if="!resumeUploaded">Upload your Resume to Enhance your profile.</li>
-            <li v-if="recommendedDrives.length > 0">New drive from {{ recommendedDrives[0].company_name }} opened.</li>
-            <li v-if="upcomingInterviews.length > 0">Interview schedule updated for {{ upcomingInterviews[0].company_name }}.</li>
+          <div class="alert-container">
+            <div v-if="!resumeUploaded" class="alert-items alert-items-text">
+              <i class="fas fa-upload"></i>
+              <p>Upload your Resume to Enhance your profile.</p>
+            </div>
+            <div v-if="recommendedDrives.length > 0" class="alert-items alert-items-text">
+              <i class="fas fa-briefcase"></i>
+              <p>New drive from {{ recommendedDrives[0].company_name }} opened.</p>
+            </div>
+            <div v-if="upcomingInterviews.length > 0" class="alert-items alert-items-text">
+              <i class="fas fa-calendar-check"></i>
+              <p>Interview schedule updated for {{ upcomingInterviews[0].company_name }}.</p>
+            </div>
+            <div v-if="stats.offer > 0" class="alert-items alert-items-text">
+              <i class="fas fa-trophy"></i>
+              <p>Congratulations! You have {{ stats.offer }} job offer{{ stats.offer > 1 ? 's' : '' }}.</p>
+            </div>
+            <div v-if="recentApplications.length > 0 && recentApplications[0].status === 'Shortlisted'" class="alert-items alert-items-text">
+              <i class="fas fa-check-circle"></i>
+              <p>You've been shortlisted for {{ recentApplications[0].job_title }} at {{ recentApplications[0].company_name }}.</p>
+            </div>
+            <div v-if="!resumeUploaded && !recommendedDrives.length && !upcomingInterviews.length && !stats.offer" class="alert-items alert-items-text">
+              <i class="fas fa-bell"></i>
+              <p>No new notifications at the moment.</p>
             </div>
           </div>
-          </ul>
         </div>
       </aside>
     </div>
@@ -134,6 +151,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDate, driveStatusLabel, driveStatusClass } from '@/utils/formatters'
 
 export default {
   name: 'StudentDashboard',
@@ -169,7 +187,7 @@ export default {
     await this.fetchDashboard()
   },
   methods: {
-    formatDate(d) { return new Date(d).toLocaleDateString() },
+    formatDate,
     eligibilitySummary(drive) {
       if (!drive.eligibility || drive.eligibility.length === 0) return 'Open to all'
       const minCgpa = Math.min(...drive.eligibility.map(el => el.min_cgpa || 0))
@@ -177,16 +195,8 @@ export default {
       const branchText = branches.length ? branches.slice(0, 2).join(', ') : 'All branches'
       return `CGPA ${minCgpa}+ • ${branchText}`
     },
-    driveStatusLabel(drive) {
-      if (drive.deadline_passed) return 'Closed'
-      if (drive.already_applied) return 'Applied'
-      return 'Not Applied'
-    },
-    driveStatusClass(drive) {
-      if (drive.deadline_passed) return 'status-closed'
-      if (drive.already_applied) return 'status-applied'
-      return 'status-pending'
-    },
+    driveStatusLabel,
+    driveStatusClass,
     async fetchDashboard() {
       try {
         const { data } = await api.get('/student/dashboard')

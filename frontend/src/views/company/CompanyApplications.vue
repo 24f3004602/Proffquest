@@ -61,11 +61,15 @@
               <td>{{ formatDate(application.applied_at) }}</td>
               <td class="actions">
                 <button class="action-btn" @click="openProfile(application)">View</button>
-                <button class="action-btn btn-approve" @click="setStatus(application, 'Shortlisted')">Shortlist</button>
-                <button class="action-btn" @click="setStatus(application, 'Interview')">Interview</button>
-                <button class="action-btn btn-approve" @click="setStatus(application, 'Offer')">Offer</button>
-                <button class="action-btn" @click="setStatus(application, 'Placed')">Placed</button>
-                <button class="action-btn btn-reject" @click="setStatus(application, 'Rejected')">Reject</button>
+                <button
+                  v-for="action in getStatusActions(application.status)"
+                  :key="`${application.application_id}-${action.status}`"
+                  class="action-btn"
+                  :class="action.type === 'reject' ? 'btn-reject' : 'btn-approve'"
+                  @click="setStatus(application, action.status)"
+                >
+                  {{ action.label }}
+                </button>
               </td>
             </tr>
           </tbody>
@@ -126,6 +130,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDate, getStatusActions } from '@/utils/formatters'
 
 export default {
   name: 'CompanyApplications',
@@ -150,7 +155,8 @@ export default {
     }
   },
   methods: {
-    formatDate(d) { return new Date(d).toLocaleDateString() },
+    getStatusActions,
+    formatDate,
     filterApplications() {
       let list = this.applications
       if (this.selectedDriveId) {

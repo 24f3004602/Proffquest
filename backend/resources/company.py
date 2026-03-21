@@ -1,17 +1,18 @@
-from flask import request
+from flask import request, Response
 from flask_restful import Resource
 from flask_jwt_extended import get_jwt_identity
 from models import db, Company, Placement_drive, Application, Student, Drive_eligibility
 from datetime import datetime
+import csv
+from io import StringIO
 from utils.decorators import role_required
-from utils.cache import (
-    cache_response, CACHE_PREFIXES, invalidate_drives_cache,
-    invalidate_company_cache, invalidate_application_cache
-)
+from utils.cache import cache
+from utils.notifications import notify, send_gchat, GCHAT_URL
 import json
 
 class CompanyDashboard(Resource):
     @role_required('company')
+    @cache.cached(timeout=300)
     def get(self):
         identity = json.loads(get_jwt_identity())
         company_id = identity['id']
@@ -48,6 +49,7 @@ class CompanyDashboard(Resource):
                 'job_title': drive.job_title,
                 'job_description': drive.job_description,
                 'package_offered': drive.package_offered,
+                'role': drive.role,
                 'location': drive.location,
                 'rounds': drive.rounds,
                 'application_deadline': drive.application_deadline.isoformat(),
@@ -135,9 +137,12 @@ class CreatePlacementDrive(Resource):
         new_drive = Placement_drive(
             company_id=company.id,
             job_title=data['job_title'],
+            role=data.get('role'),
             job_description=data['job_description'],
             package_offered=data['package_offered'],
             location=data['location'],
+            job_type=data.get('job_type', 'Full-time'),
+            skills_required=data.get('skills_required'),
             rounds=data.get('rounds'),
             application_deadline=deadline,
             drive_date=drive_date,
@@ -154,6 +159,7 @@ class CreatePlacementDrive(Resource):
                 drive_id=new_drive.id,
                 branch=el.get('branch'),
                 min_cgpa=el.get('min_cgpa', 0.0),
+                student_status=el.get('student_status', 'studying'),
                 passing_year=el.get('passing_year'),
                 backlog_allowed=el.get('backlog_allowed', False),
                 additional_criteria=el.get('additional_criteria', '')
@@ -161,7 +167,8 @@ class CreatePlacementDrive(Resource):
             db.session.add(eligibility)
 
         db.session.commit()
-        invalidate_drives_cache()
+        cache.clear()
+        send_gchat(GCHAT_URL, f'New Placement Drive Created: "{new_drive.job_title}" by {company.company_name} (pending approval)')
         return {'message': 'Placement drive created successfully', 'drive_id': new_drive.id}, 201
 
 class CompanyDrives(Resource):
@@ -180,9 +187,12 @@ class CompanyDrives(Resource):
             drives_data.append({
                 'id': drive.id,
                 'job_title': drive.job_title,
+                'role': drive.role,
                 'job_description': drive.job_description,
                 'package_offered': drive.package_offered,
                 'location': drive.location,
+                'job_type': drive.job_type,
+                'skills_required': drive.skills_required,
                 'rounds': drive.rounds,
                 'application_deadline': drive.application_deadline.isoformat() if drive.application_deadline else None,
                 'drive_date': drive.drive_date.isoformat() if drive.drive_date else None,
@@ -268,16 +278,36 @@ class UpdateApplicationStatus(Resource):
         if not drive:
             return {'message': 'Unauthorized'}, 403
 
+        current_status = application.status
+        if current_status == 'Selected':
+            current_status = 'Offer'
+
+        allowed_transitions = {
+            'Applied': {'Shortlisted', 'Rejected'},
+            'Shortlisted': {'Interview', 'Rejected'},
+            'Interview': {'Offer', 'Rejected'},
+            'Offer': {'Placed'}
+        }
+
+        if status != current_status:
+            valid_next = allowed_transitions.get(current_status, set())
+            if status not in valid_next:
+                if current_status in ['Rejected', 'Placed']:
+                    return {'message': f'Cannot update application once it is {current_status.lower()}'}, 400
+                return {
+                    'message': f'Invalid status transition from {current_status} to {status}'
+                }, 400
+
         application.status = status
         if status == 'Shortlisted':
-            application.shortlisted_at = datetime.utcnow()
+            application.shortlisted_at = application.shortlisted_at or datetime.utcnow()
         elif status == 'Interview':
-            application.interview_at = datetime.utcnow()
+            application.interview_at = application.interview_at or datetime.utcnow()
         elif status == 'Offer':
-            application.offer_at = datetime.utcnow()
+            application.offer_at = application.offer_at or datetime.utcnow()
             application.selected_at = application.selected_at or application.offer_at
         elif status == 'Placed':
-            application.placed_at = datetime.utcnow()
+            application.placed_at = application.placed_at or datetime.utcnow()
         if interview_schedule:
             try:
                 application.interview_schedule = datetime.fromisoformat(interview_schedule)
@@ -292,7 +322,22 @@ class UpdateApplicationStatus(Resource):
         application.interview_notes = feedback
 
         db.session.commit()
-        invalidate_application_cache()
+        cache.clear()
+
+        # Send notification to student about status change
+        student = Student.query.get(application.student_id)
+        drive = Placement_drive.query.get(application.drive_id)
+        if student and drive:
+            status_messages = {
+                'Shortlisted': f'Congratulations! You have been shortlisted for "{drive.job_title}" at {company.company_name}.',
+                'Interview': f'You have been scheduled for an interview for "{drive.job_title}" at {company.company_name}.' + (f' Interview: {interview_schedule}' if interview_schedule else ''),
+                'Offer': f'Congratulations! You have received an offer for "{drive.job_title}" at {company.company_name}!',
+                'Rejected': f'Your application for "{drive.job_title}" at {company.company_name} was not selected.',
+                'Placed': f'Congratulations! You have been placed at {company.company_name} for "{drive.job_title}"!',
+            }
+            msg = status_messages.get(status, f'Your application status for "{drive.job_title}" has been updated to {status}.')
+            notify(student.email, f'Application Update - {status}', msg)
+
         return {'message': 'Application status updated successfully'}
 
 class UpdateDriveStatus(Resource):
@@ -320,6 +365,9 @@ class UpdateDriveStatus(Resource):
             drive.is_active = is_active
 
         db.session.commit()
+        cache.clear()
+        if status == 'closed':
+            send_gchat(GCHAT_URL, f'Drive Closed: "{drive.job_title}" by {company.company_name} has been closed.')
         return {'message': 'Drive status updated successfully'}
 
 
@@ -373,54 +421,6 @@ class CompanyInterviews(Resource):
         return {'interviews': interviews}
 
 
-class CompanySelectedStudents(Resource):
-    @role_required('company')
-    def get(self):
-        identity = json.loads(get_jwt_identity())
-        company_id = identity['id']
-        company = Company.query.get_or_404(company_id)
-        if company.status != 'approved':
-            return {'message': 'Company not approved yet'}, 403
-
-        # Get all offer applications across all company drives
-        applications = Application.query.join(Placement_drive).filter(
-            Placement_drive.company_id == company.id,
-            Application.status.in_(['Offer', 'Selected'])
-        ).order_by(Application.offer_at.desc()).all()
-
-        selected = []
-        for app in applications:
-            student = Student.query.get(app.student_id)
-            drive = Placement_drive.query.get(app.drive_id)
-            if student and drive:
-                selected.append({
-                    'application_id': app.id,
-                    'student': {
-                        'id': student.id,
-                        'full_name': student.full_name,
-                        'email': student.email,
-                        'roll_number': student.roll_number,
-                        'college': student.college,
-                        'branch': student.branch,
-                        'cgpa': student.cgpa,
-                        'year': student.year,
-                        'resume_url': student.resume_url
-                    },
-                    'drive': {
-                        'id': drive.id,
-                        'job_title': drive.job_title,
-                        'package_offered': drive.package_offered
-                    },
-                    'selected_at': app.selected_at.isoformat() if app.selected_at else None,
-                    'offer_at': app.offer_at.isoformat() if app.offer_at else None,
-                    'interview_mode': app.interview_mode,
-                    'interview_location': app.interview_location,
-                    'interview_notes': app.interview_notes
-                })
-
-        return {'selected': selected}
-
-
 class CompanyProfile(Resource):
     @role_required('company')
     def get(self):
@@ -471,6 +471,7 @@ class CompanyProfile(Resource):
             company.address = data['address']
 
         db.session.commit()
+        cache.clear()
         return {'message': 'Profile updated successfully'}
 
 
@@ -488,6 +489,8 @@ class CompanySubmitApproval(Resource):
 
         company.status = 'pending'
         db.session.commit()
+        cache.clear()
+        send_gchat(GCHAT_URL, f'Company Approval Request: "{company.company_name}" has submitted for admin approval.')
         return {'message': 'Submitted for admin approval'}
 
 
@@ -605,3 +608,178 @@ class CompanyResults(Resource):
                 })
 
         return {'results': results}
+
+
+class CompanyResultsCSV(Resource):
+    @role_required('company')
+    def get(self):
+        identity = json.loads(get_jwt_identity())
+        company_id = identity['id']
+        company = Company.query.get_or_404(company_id)
+        if company.status != 'approved':
+            return {'message': 'Company not approved yet'}, 403
+
+        applications = Application.query.join(Placement_drive).filter(
+            Placement_drive.company_id == company.id,
+            Application.status.in_(['Shortlisted', 'Interview', 'Offer', 'Rejected', 'Placed', 'Selected'])
+        ).order_by(Application.applied_at.desc()).all()
+
+        stream = StringIO()
+        writer = csv.writer(stream)
+        writer.writerow([
+            'application_id',
+            'status',
+            'student_id',
+            'student_name',
+            'student_email',
+            'roll_number',
+            'college',
+            'branch',
+            'cgpa',
+            'year',
+            'drive_id',
+            'job_title',
+            'package_offered',
+            'applied_at',
+            'shortlisted_at',
+            'interview_at',
+            'offer_at',
+            'placed_at',
+            'selected_at',
+            'interview_mode',
+            'interview_location',
+            'interview_notes',
+        ])
+
+        for app in applications:
+            student = Student.query.get(app.student_id)
+            drive = Placement_drive.query.get(app.drive_id)
+            if not student or not drive:
+                continue
+
+            writer.writerow([
+                app.id,
+                app.status,
+                student.id,
+                student.full_name,
+                student.email,
+                student.roll_number,
+                student.college,
+                student.branch,
+                student.cgpa,
+                student.year,
+                drive.id,
+                drive.job_title,
+                drive.package_offered,
+                app.applied_at.isoformat() if app.applied_at else '',
+                app.shortlisted_at.isoformat() if app.shortlisted_at else '',
+                app.interview_at.isoformat() if app.interview_at else '',
+                app.offer_at.isoformat() if app.offer_at else '',
+                app.placed_at.isoformat() if app.placed_at else '',
+                app.selected_at.isoformat() if app.selected_at else '',
+                app.interview_mode or '',
+                app.interview_location or '',
+                app.interview_notes or '',
+            ])
+
+        filename = f"company_results_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+        return Response(
+            stream.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={filename}'},
+        )
+
+
+class DriveDetail(Resource):
+    @role_required('company')
+    def get(self, drive_id):
+        identity = json.loads(get_jwt_identity())
+        company_id = identity['id']
+        company = Company.query.get_or_404(company_id)
+        
+        drive = Placement_drive.query.filter_by(id=drive_id, company_id=company.id).first()
+        if not drive:
+            return {'message': 'Drive not found'}, 404
+
+        eligibilities = Drive_eligibility.query.filter_by(drive_id=drive.id).all()
+        eligibility_data = [{
+            'branch': el.branch,
+            'min_cgpa': el.min_cgpa,
+            'student_status': el.student_status,
+            'passing_year': el.passing_year,
+            'backlog_allowed': el.backlog_allowed,
+            'additional_criteria': el.additional_criteria
+        } for el in eligibilities]
+
+        return {
+            'drive': {
+                'id': drive.id,
+                'job_title': drive.job_title,
+                'role': drive.role,
+                'job_description': drive.job_description,
+                'package_offered': drive.package_offered,
+                'location': drive.location,
+                'job_type': drive.job_type,
+                'skills_required': drive.skills_required,
+                'rounds': drive.rounds,
+                'application_deadline': drive.application_deadline.isoformat() if drive.application_deadline else None,
+                'drive_date': drive.drive_date.isoformat() if drive.drive_date else None,
+                'max_applicants': drive.max_applicants,
+                'eligibility': eligibility_data
+            }
+        }
+
+    @role_required('company')
+    def put(self, drive_id):
+        identity = json.loads(get_jwt_identity())
+        company_id = identity['id']
+        company = Company.query.get_or_404(company_id)
+        
+        drive = Placement_drive.query.filter_by(id=drive_id, company_id=company.id).first()
+        if not drive:
+            return {'message': 'Drive not found'}, 404
+
+        data = request.get_json()
+        required_fields = ['job_title', 'job_description', 'package_offered', 'location', 'application_deadline', 'drive_date']
+        for field in required_fields:
+            if field not in data:
+                return {'message': f'{field} is required'}, 400
+
+        try:
+            deadline = datetime.fromisoformat(data['application_deadline'])
+            drive_date = datetime.fromisoformat(data['drive_date'])
+        except ValueError:
+            return {'message': 'Invalid date format'}, 400
+
+        # Update drive fields
+        drive.job_title = data['job_title']
+        drive.role = data.get('role')
+        drive.job_description = data['job_description']
+        drive.package_offered = data['package_offered']
+        drive.location = data['location']
+        drive.job_type = data.get('job_type', 'Full-time')
+        drive.skills_required = data.get('skills_required')
+        drive.rounds = data.get('rounds')
+        drive.application_deadline = deadline
+        drive.drive_date = drive_date
+        drive.max_applicants = data.get('max_applicants')
+
+        # Update eligibility criteria - delete old ones and add new ones
+        Drive_eligibility.query.filter_by(drive_id=drive.id).delete()
+        
+        eligibility_data = data.get('eligibility', [])
+        for el in eligibility_data:
+            eligibility = Drive_eligibility(
+                drive_id=drive.id,
+                branch=el.get('branch'),
+                min_cgpa=el.get('min_cgpa', 0.0),
+                student_status=el.get('student_status', ''),
+                passing_year=el.get('passing_year'),
+                backlog_allowed=el.get('backlog_allowed', False),
+                additional_criteria=el.get('additional_criteria', '')
+            )
+            db.session.add(eligibility)
+
+        db.session.commit()
+        cache.clear()
+        return {'message': 'Drive updated successfully'}, 200

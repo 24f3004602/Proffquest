@@ -97,10 +97,10 @@
                 <button @click="openScheduleModal(item)" class="action-btn">
                   {{ item.interview_schedule ? 'Reschedule' : 'Schedule' }}
                 </button>
-                <button @click="selectStudent(item)" class="action-btn btn-approve" :disabled="item.processing">
-                  Select
+                <button v-if="item.status === 'Interview'" @click="selectStudent(item)" class="action-btn btn-approve" :disabled="item.processing">
+                  Send Offer
                 </button>
-                <button @click="rejectStudent(item)" class="action-btn btn-reject" :disabled="item.processing">
+                <button v-if="item.status === 'Shortlisted' || item.status === 'Interview'" @click="rejectStudent(item)" class="action-btn btn-reject" :disabled="item.processing">
                   Reject
                 </button>
               </td>
@@ -148,6 +148,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDateTime } from '@/utils/formatters'
 
 export default {
   name: 'CompanyInterviews',
@@ -192,7 +193,7 @@ export default {
     await this.fetchInterviews()
   },
   methods: {
-    formatDateTime(d) { return new Date(d).toLocaleString() },
+    formatDateTime,
     async fetchInterviews() {
       try {
         const { data } = await api.get('/company/interviews')
@@ -234,6 +235,7 @@ export default {
         m.interview.interview_mode = m.mode
         m.interview.interview_location = m.location
         m.interview.interview_notes = m.notes
+        m.interview.status = 'Interview'
         this.closeModal()
       } catch (err) {
         alert(err.response?.data?.message || 'Failed to schedule interview')
@@ -242,7 +244,7 @@ export default {
       }
     },
     async selectStudent(item) {
-      if (!confirm(`Select ${item.student.full_name} for ${item.drive.job_title}?`)) return
+      if (!confirm(`Send offer to ${item.student.full_name} for ${item.drive.job_title}?`)) return
       item.processing = true
       try {
         await api.put(`/company/application/${item.application_id}/status`, {

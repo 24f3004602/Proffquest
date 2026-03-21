@@ -5,15 +5,38 @@ from models import db, Student, Placement_drive, Application, Drive_eligibility
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from utils.decorators import role_required
-from utils.cache import (
-    cache_response, CACHE_PREFIXES, invalidate_drives_cache,
-    invalidate_student_cache, invalidate_application_cache
-)
+from utils.cache import cache
+from utils.notifications import notify
 import json
+
+
+def _serialize_eligibility(eligibilities):
+    return [{
+        'branch': el.branch,
+        'min_cgpa': el.min_cgpa,
+        'student_status': el.student_status,
+        'passing_year': el.passing_year,
+        'backlog_allowed': el.backlog_allowed,
+        'additional_criteria': el.additional_criteria
+    } for el in eligibilities]
+
+
+def _is_profile_complete(student):
+    required_fields = [
+        student.full_name,
+        student.email,
+        student.roll_number,
+        student.branch,
+        student.cgpa,
+        student.year,
+        student.resume_url
+    ]
+    return all(required_fields)
 
 
 class StudentDashboard(Resource):
     @role_required('student')
+    @cache.cached(timeout=300)
     def get(self):
         identity = json.loads(get_jwt_identity())
         student_id = identity['id']
@@ -74,13 +97,20 @@ class StudentDashboard(Resource):
                 student_id=student.id, drive_id=drive.id
             ).first() is not None
 
+            deadline_passed = drive.application_deadline < datetime.utcnow()
+            eligibilities = Drive_eligibility.query.filter_by(drive_id=drive.id).all()
+            eligibility_info = _serialize_eligibility(eligibilities)
+
             drives_data.append({
                 'id': drive.id,
                 'job_title': drive.job_title,
                 'company_name': drive.company.company_name,
                 'package_offered': drive.package_offered,
                 'application_deadline': drive.application_deadline.isoformat(),
-                'already_applied': already_applied
+                'already_applied': already_applied,
+                'is_active': drive.is_active,
+                'deadline_passed': deadline_passed,
+                'eligibility': eligibility_info
             })
 
         return {
@@ -162,11 +192,13 @@ class StudentProfile(Resource):
             student.roll_number = data['roll_number']
 
         db.session.commit()
+        cache.clear()
         return {'message': 'Profile updated successfully'}
 
 
 class StudentDrives(Resource):
     @role_required('student')
+    @cache.cached(timeout=300)
     def get(self):
         identity = json.loads(get_jwt_identity())
         student_id = identity['id']
@@ -188,28 +220,9 @@ class StudentDrives(Resource):
                 student_id=student.id, drive_id=drive.id
             ).first() is not None
 
-            # Check eligibility
-            eligible = True
-            eligibility_info = []
             eligibilities = Drive_eligibility.query.filter_by(drive_id=drive.id).all()
-            if eligibilities:
-                # Student is eligible if they match ANY eligibility criteria row
-                eligible = False
-                for el in eligibilities:
-                    branch_match = el.branch.lower() == student.branch.lower() or el.branch.lower() == 'all'
-                    cgpa_match = student.cgpa >= el.min_cgpa
-                    year_match = el.passing_year is None or student.year == el.passing_year
-
-                    eligibility_info.append({
-                        'branch': el.branch,
-                        'min_cgpa': el.min_cgpa,
-                        'passing_year': el.passing_year,
-                        'backlog_allowed': el.backlog_allowed,
-                        'additional_criteria': el.additional_criteria
-                    })
-
-                    if branch_match and cgpa_match and year_match:
-                        eligible = True
+            eligibility_info = _serialize_eligibility(eligibilities)
+            eligible = _is_profile_complete(student)
 
             # Check if deadline passed
             deadline_passed = drive.application_deadline < datetime.utcnow()
@@ -217,63 +230,24 @@ class StudentDrives(Resource):
             drives_data.append({
                 'id': drive.id,
                 'job_title': drive.job_title,
+                'role': drive.role,
                 'job_description': drive.job_description,
                 'company_name': drive.company.company_name,
                 'package_offered': drive.package_offered,
                 'location': drive.location,
+                'job_type': drive.job_type,
+                'skills_required': drive.skills_required,
                 'application_deadline': drive.application_deadline.isoformat(),
                 'drive_date': drive.drive_date.isoformat(),
                 'max_applicants': drive.max_applicants,
                 'already_applied': already_applied,
                 'eligible': eligible,
+                'is_active': drive.is_active,
                 'deadline_passed': deadline_passed,
                 'eligibility': eligibility_info
             })
 
         return {'drives': drives_data}
-
-
-class StudentDriveDetail(Resource):
-    @role_required('student')
-    def get(self, drive_id):
-        identity = json.loads(get_jwt_identity())
-        student_id = identity['id']
-        student = Student.query.get_or_404(student_id)
-
-        drive = Placement_drive.query.get_or_404(drive_id)
-        if not drive.is_approved or not drive.is_active:
-            return {'message': 'Drive not available'}, 404
-
-        already_applied = Application.query.filter_by(
-            student_id=student.id, drive_id=drive.id
-        ).first() is not None
-
-        eligibilities = Drive_eligibility.query.filter_by(drive_id=drive.id).all()
-        eligibility_data = [{
-            'branch': el.branch,
-            'min_cgpa': el.min_cgpa,
-            'passing_year': el.passing_year,
-            'backlog_allowed': el.backlog_allowed,
-            'additional_criteria': el.additional_criteria
-        } for el in eligibilities]
-
-        return {
-            'drive': {
-                'id': drive.id,
-                'job_title': drive.job_title,
-                'job_description': drive.job_description,
-                'company_name': drive.company.company_name,
-                'company_website': drive.company.website,
-                'company_description': drive.company.description,
-                'package_offered': drive.package_offered,
-                'location': drive.location,
-                'application_deadline': drive.application_deadline.isoformat(),
-                'drive_date': drive.drive_date.isoformat(),
-                'max_applicants': drive.max_applicants,
-                'already_applied': already_applied,
-                'eligibility': eligibility_data
-            }
-        }
 
 
 class StudentApply(Resource):
@@ -308,19 +282,9 @@ class StudentApply(Resource):
             if current_count >= drive.max_applicants:
                 return {'message': 'Maximum applicants reached for this drive'}, 400
 
-        # Check eligibility
-        eligibilities = Drive_eligibility.query.filter_by(drive_id=drive.id).all()
-        if eligibilities:
-            eligible = False
-            for el in eligibilities:
-                branch_match = el.branch.lower() == student.branch.lower() or el.branch.lower() == 'all'
-                cgpa_match = student.cgpa >= el.min_cgpa
-                year_match = el.passing_year is None or student.year == el.passing_year
-                if branch_match and cgpa_match and year_match:
-                    eligible = True
-                    break
-            if not eligible:
-                return {'message': 'You do not meet the eligibility criteria for this drive'}, 400
+        # Check eligibility (profile completion only)
+        if not _is_profile_complete(student):
+            return {'message': 'Complete your profile before applying'}, 400
 
         # Create application
         new_application = Application(
@@ -335,6 +299,20 @@ class StudentApply(Resource):
         except IntegrityError:
             db.session.rollback()
             return {'message': 'You have already applied to this drive'}, 400
+
+        cache.clear()
+
+        # Notify student and company about the application
+        notify(
+            student.email,
+            'Application Submitted',
+            f'You have successfully applied to "{drive.job_title}" at {drive.company.company_name}.'
+        )
+        notify(
+            drive.company.email,
+            'New Application Received',
+            f'{student.full_name} has applied to your drive "{drive.job_title}".'
+        )
 
         return {'message': 'Application submitted successfully', 'application_id': new_application.id}, 201
 

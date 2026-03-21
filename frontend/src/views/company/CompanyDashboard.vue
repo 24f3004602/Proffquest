@@ -54,8 +54,8 @@
             <h3>Recent Placement Drives</h3>
           </div>
           <div v-if="recentDrives.length === 0" class="no-data">No drives created yet.</div>
-          <div v-else>
-            <table class="data-table">
+          <div v-else class="scroll-area">
+            <table class="recent-items data-table">
               <thead>
                 <tr>
                   <th>Drive Name</th>
@@ -68,14 +68,20 @@
               <tbody>
                 <tr v-for="drive in recentDrives" :key="drive.id">
                   <td>{{ drive.job_title }}</td>
-                  <td>{{ drive.job_title }}</td>
+                  <td>{{ drive.role || '-' }}</td>
                   <td>{{ drive.applicant_count }}</td>
                   <td>
                     <span :class="'status-badge status-' + drive.status">{{ drive.status }}</span>
                   </td>
                   <td class="actions">
                     <router-link :to="'/company/applications?drive=' + drive.id" class="action-btn">View</router-link>
-                    <router-link :to="'/company/create-drive?edit=' + drive.id" class="action-btn">Edit</router-link>
+                    <router-link 
+                      v-if="drive.is_active && drive.status !== 'closed'"
+                      :to="'/company/create-drive?edit=' + drive.id" 
+                      class="action-btn"
+                    >
+                      Edit
+                    </router-link>
                   </td>
                 </tr>
               </tbody>
@@ -90,7 +96,7 @@
             <h3>Applicants per Drive</h3>
           </div>
           <div v-if="drives.length === 0" class="no-data">No data available.</div>
-          <div v-else class="bar-chart">
+          <div v-else class="bar-chart scroll-area">
             <div v-for="drive in drives" :key="'bar-' + drive.id" class="bar-row">
               <div class="bar-label">{{ drive.job_title }}</div>
               <div class="bar-track">
@@ -108,7 +114,7 @@
           <h3>Upcoming Interviews</h3>
         </div>
         <div v-if="upcomingInterviews.length === 0" class="no-data">No upcoming interviews.</div>
-        <div v-else class="recent-list">
+        <div v-else class="recent-list scroll-area">
           <div v-for="item in upcomingInterviews" :key="item.application_id" class="recent-item compact">
             <div class="recent-header">
               <h4>{{ item.student.full_name }}</h4>
@@ -126,6 +132,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDateTime } from '@/utils/formatters'
 
 export default {
   name: 'CompanyDashboard',
@@ -153,8 +160,7 @@ export default {
     await this.fetchInterviews()
   },
   methods: {
-    formatDate(d) { return new Date(d).toLocaleDateString() },
-    formatDateTime(d) { return new Date(d).toLocaleString() },
+    formatDateTime,
     barWidth(drive) {
       if (!this.maxApplicants) return '0%'
       const percent = Math.round((drive.applicant_count / this.maxApplicants) * 100)

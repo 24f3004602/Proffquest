@@ -33,6 +33,8 @@
             <tr>
               <th>Drive</th>
               <th>Role</th>
+              <th>Job Type</th>
+              <th>Package</th>
               <th>Applicants</th>
               <th>Status</th>
               <th>Last Date</th>
@@ -45,15 +47,22 @@
                 <strong>{{ drive.job_title }}</strong>
                 <div class="text-small">{{ drive.location }}</div>
               </td>
-              <td>{{ drive.job_title }}</td>
+              <td>{{ drive.role || '-' }}</td>
+              <td>{{ drive.job_type || 'Full-time' }}</td>
+              <td>{{ drive.package_offered }}</td>
               <td>{{ drive.applicant_count }}</td>
               <td>
                 <span :class="'status-badge status-' + drive.status">{{ drive.status }}</span>
               </td>
               <td>{{ formatDate(drive.application_deadline) }}</td>
               <td class="actions">
-                <router-link :to="'/company/applications?drive=' + drive.id" class="action-btn">View</router-link>
-                <router-link :to="'/company/create-drive?edit=' + drive.id" class="action-btn">Edit</router-link>
+                <router-link 
+                  v-if="drive.is_active && drive.status !== 'closed'"
+                  :to="'/company/create-drive?edit=' + drive.id" 
+                  class="action-btn"
+                >
+                  Edit
+                </router-link>
                 <button
                   v-if="drive.is_active"
                   @click="toggleDrive(drive)"
@@ -73,6 +82,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDate } from '@/utils/formatters'
 
 export default {
   name: 'CompanyDrivesPage',
@@ -80,7 +90,6 @@ export default {
     return {
       loading: true,
       error: null,
-      companyStatus: 'pending',
       drives: [],
       statusFilter: '',
       togglingId: null
@@ -96,12 +105,11 @@ export default {
     await this.fetchDrives()
   },
   methods: {
-    formatDate(d) { return d ? new Date(d).toLocaleDateString() : 'N/A' },
+    formatDate,
     async fetchDrives() {
       try {
         const { data } = await api.get('/company/drives')
         this.drives = data.drives
-        this.companyStatus = data.company_status || 'pending'
       } catch (err) {
         this.error = err.response?.data?.message || 'Failed to load drives'
       } finally {

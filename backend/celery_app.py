@@ -27,23 +27,20 @@ def make_celery(app):
     celery.conf.beat_schedule = {
         "interview-reminders-hourly": {
             "task": "tasks.send_interview_reminders",
-            "schedule": crontab(minute=0),
+            "schedule": crontab(),
         },
         "deadline-reminders-daily": {
             "task": "tasks.send_deadline_reminders",
-            "schedule": crontab(minute=0, hour=9),
+            "schedule": crontab(),
         },
         "monthly-placement-reports": {
             "task": "tasks.generate_monthly_placement_reports",
-            "schedule": crontab(minute=0, hour=3, day_of_month=1),
+            "schedule": crontab(),
         },
         "monthly-admin-activity-report": {
             "task": "tasks.generate_admin_monthly_report",
-            "schedule": crontab(minute=0, hour=3, day_of_month=1),
+            "schedule": crontab(),
         },
     }
 
     return celery
-
-
-import tasks

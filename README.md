@@ -1,53 +1,495 @@
-# Proffquest
-Proffquest is the web application to search jobs where verified company can advertise their vacant jobs and skilled users can apply for their role and company can hire them. The whole applicaton will handled by Admin where he can verify and blacklist companies as required.
+# Proffquest - Campus Placement Management System
 
-## Setup Instructions
+Proffquest is a comprehensive web-based campus placement management system that connects students, companies, and administrators in a streamlined recruitment process. The platform enables verified companies to post job opportunities, allows students to apply for positions, and provides administrators with complete oversight and management capabilities.
+
+## 📁 Project Structure
+
+```
+Proffquest/
+├── backend/
+│   ├── resources/                # API resource classes (one per domain)
+│   │   ├── admin.py              # Admin endpoints (dashboard, companies, students, drives)
+│   │   ├── analytics.py          # Public statistics & chart data
+│   │   ├── auth.py               # Login & registration
+│   │   ├── company.py            # Company dashboard, drives, interviews, results
+│   │   ├── exports.py            # Async CSV export & report downloads
+│   │   └── student.py            # Student dashboard, drives, applications
+│   ├── utils/
+│   │   ├── cache.py              # Flask-Caching with Redis (init, clear, key builder)
+│   │   ├── decorators.py         # @role_required JWT decorator
+│   │   └── notifications.py     # Email (SMTP) & Google Chat webhook helpers
+│   ├── migrations/               # Alembic database migrations
+│   │   └── versions/
+│   ├── exports/                  # Generated CSV export files (per user)
+│   ├── app.py                    # Flask app factory, route registration, extensions
+│   ├── celery_app.py             # Celery configuration & beat schedule
+│   ├── default_admin.py          # Seed script for default admin account
+│   ├── models.py                 # SQLAlchemy models (8 tables)
+│   ├── tasks.py                  # Celery tasks (reminders, exports, reports)
+│   └── requirements.txt          # Python dependencies
+├── frontend/
+│   ├── src/
+│   │   ├── assets/               # Static assets (logo, global CSS)
+│   │   ├── router/index.js       # Vue Router with role-based guards
+│   │   ├── services/api.js       # Axios instance with JWT interceptor
+│   │   ├── stores/auth.js        # Pinia auth store (login, logout, role)
+│   │   ├── views/
+│   │   │   ├── admin/            # Admin pages (dashboard, companies, students, drives, applications)
+│   │   │   ├── company/          # Company pages (dashboard, drives, interviews, results, profile)
+│   │   │   ├── student/          # Student pages (dashboard, drives, applications, profile, history)
+│   │   │   ├── Login.vue
+│   │   │   └── Register.vue
+│   │   ├── App.vue               # Root component
+│   │   ├── home.vue              # Public landing page with charts
+│   │   ├── main.js               # Vue app entry point
+│   │   └── NavBar.vue            # Navigation bar (role-aware)
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── .gitignore
+└── README.md
+```
+
+## 🏗️ Architecture
+
+### Technology Stack
+- **Frontend**: Vue.js 3 (Composition API + Options API), Vue Router, Pinia, Chart.js, Vite
+- **Backend**: Flask, Flask-RESTful, SQLAlchemy ORM
+- **Database**: SQLite (dev) / PostgreSQL (prod), Alembic migrations
+- **Caching**: Flask-Caching with Redis backend (5-min TTL, auto-invalidation)
+- **Authentication**: JWT (Flask-JWT-Extended), role-based access control
+- **Background Jobs**: Celery with Redis broker, Celery Beat scheduler
+- **Notifications**: SMTP email, Google Chat webhooks
+
+### System Overview
+```
+Frontend (Vue.js + Vite) ─── REST API ──→ Backend (Flask)
+                                              │
+                              ┌────────────────┼────────────────┐
+                              ▼                ▼                ▼
+                        SQLite/PostgreSQL   Redis Cache    Celery + Redis
+                                          (Flask-Caching)  (async tasks)
+                                                                │
+                                                    ┌───────────┼───────────┐
+                                                    ▼           ▼           ▼
+                                              Email (SMTP)  Google Chat  CSV/PDF
+                                                            Webhooks    Reports
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+
+- Node.js 16+
+- Redis
 
 ### Backend Setup
-1. Navigate to the backend directory: `cd backend`
-2. Install dependencies: `pip install -r requirements.txt`
-3. Set up environment variables: Copy `.env` file and update JWT_SECRET_KEY
-4. (Optional) Configure email for notifications using SMTP_* and EMAIL_SENDER
-5. Initialize the database: `python default_admin.py`
-6. Run the application: `python app.py`
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Set up environment variables in `.env`:
+   ```env
+   JWT_SECRET_KEY=your-secret-key
+   REDIS_URL=redis://localhost:6379/0
+   CELERY_BROKER_URL=redis://localhost:6379/0
+   CELERY_RESULT_BACKEND=redis://localhost:6379/0
+   SMTP_HOST=localhost
+   SMTP_PORT=1025
+   EMAIL_SENDER=noreply@proffquest.local
+   GCHAT_WEBHOOK_URL=your-webhook-url
+   ```
+4. Initialize the database and create default admin:
+   ```bash
+   python default_admin.py
+   ```
+5. Start the Flask application:
+   ```bash
+   python app.py
+   ```
 
-### Background Jobs (Celery + Redis)
-1. Start Redis locally (default: `redis://localhost:6379/0`).
-2. Run a Celery worker from the backend directory:
-	`celery -A celery_app.celery_app worker --loglevel=info`
-3. Run Celery Beat (scheduler) from the backend directory:
-	`celery -A celery_app.celery_app beat --loglevel=info`
-
-Environment variables:
-- CELERY_BROKER_URL (default: redis://localhost:6379/0)
-- CELERY_RESULT_BACKEND (default: redis://localhost:6379/0)
-- CELERY_TIMEZONE (default: UTC)
-- SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_USE_TLS, EMAIL_SENDER
-- GCHAT_WEBHOOK_URL (optional)
-- SMS_PHONE_NUMBER (placeholder)
+### Background Jobs Setup
+1. Start Redis server in wsl terminal:
+   ```bash
+   redis-server
+   ```
+2. Start Celery worker:
+   ```bash
+   celery -A app:celery worker --pool=solo --loglevel=info
+   ```
+3. Start Celery Beat scheduler:
+   ```bash
+   celery -A app:celery beat --loglevel=info
+   ```
 
 ### Frontend Setup
-1. Navigate to the frontend directory: `cd frontend`
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start development server:
+   ```bash
+   npm run dev
+   ```
 
-## Default Admin Credentials
-- Email: admin@1234
-- Password: admin1234
+### Default Admin Credentials
+- **Email**: admin@1234
+- **Password**: admin1234
 
-## Features
-- Role-based authentication (Admin, Student, Company)
-- Company verification system
-- Job posting and application management
-- Admin dashboard for oversight
-- Interview reminder job (scheduled)
-- Monthly placement reports (HTML + PDF)
-- Async CSV export for students and companies
+## 👥 User Roles & Features
 
-# Development Notes
-1. create model for database, add relation[backref vs back_populates]
-backref: can use in one model only like if we have relation btw admin and applications and we can use it in only one model for fetching admin.applications
-back_populates: can use in both models for fetching
-2. we add admin in different file(default_admin.py)
-3. we setup jwt token for role based access
+### 🎓 Students
+#### Profile Management
+- Complete academic profile (CGPA, year, branch, college)
+- Upload resume and personal details
+- Roll number verification
+
+#### Job Applications
+- Browse available placement drives
+- Filter drives by eligibility criteria
+- Apply to multiple drives with a single click
+- Track application status in real-time
+- View application history and timeline
+
+#### Application Status Tracking
+- **Applied**: Initial application submitted
+- **Shortlisted**: Selected for next round
+- **Interview**: Interview scheduled
+- **Offer**: Job offer received
+- **Placed**: Successfully placed
+- **Rejected**: Application rejected
+
+#### Data Export
+- Export application history to CSV
+- Async export processing for large datasets
+- Download status tracking
+
+### 🏢 Companies
+#### Company Verification
+- Company registration with business details
+- Admin approval workflow
+- Status tracking (pending, approved, rejected)
+- Verification badges
+
+#### Placement Drive Management
+- Create detailed job postings with:
+  - Job title, description, and requirements
+  - Package details and location
+  - Application deadline and drive date
+  - Maximum applicant limits
+  - Required skills and qualifications
+
+#### Eligibility Criteria Configuration
+- Branch-specific requirements
+- Minimum CGPA thresholds
+- Year/passing year specifications
+- Backlog policies
+- Custom additional criteria
+
+#### Application Management
+- View all applicants for drives
+- Filter and search applications
+- Update application status
+- Schedule interviews with notifications
+- Bulk status updates
+
+#### Interview Management
+- Schedule interview slots
+- Set interview mode (online/offline)
+- Add interview location and notes
+- Automatic reminder notifications
+
+#### Analytics & Reporting
+- Real-time dashboard statistics
+- Application analytics
+- Monthly placement reports (HTML/PDF)
+- Export applicant data to CSV
+- Placement success metrics
+
+#### Drive Status Management
+- **Pending**: Awaiting admin approval
+- **Approved**: Live and accepting applications
+- **Rejected**: Rejected by admin
+- **Closed**: Completed or manually closed
+
+### 👑 Administrators
+#### Company Management
+- Review and approve company registrations
+- Verify company credentials
+- Blacklist/activate companies
+- Remove companies from platform
+- Search and filter companies
+
+#### Student Management
+- View student profiles and details
+- Monitor application activities
+- Blacklist/activate student accounts
+- Search students by various criteria
+
+#### Placement Drive Oversight
+- Review and approve drive postings
+- Reject inappropriate drives
+- Monitor drive statistics
+- Ensure compliance with policies
+
+#### Application Monitoring
+- View all applications across platform
+- Monitor application trends
+- Generate detailed reports
+- Track placement success rates
+
+#### Analytics & Reports
+- Platform-wide statistics dashboard
+- Detailed CSV reports
+- User activity monitoring
+- Performance metrics
+
+#### Search & Filter Capabilities
+- Advanced search for companies and students
+- Filter by status, dates, criteria
+- Bulk operations support
+
+## 🔄 Background Job System
+
+### Automated Tasks
+#### Interview Reminders
+- **Frequency**: Every 24 hours
+- **Function**: Sends reminder notifications for upcoming interviews
+- **Channels**: Email and Google Chat notifications
+- **Logic**: Checks for interviews scheduled within 24 hours
+
+#### CSV Export Processing
+- **Trigger**: User-initiated export requests
+- **Processing**: Async generation of large CSV files
+- **Status Tracking**: Queued → Processing → Completed/Failed
+- **Notification**: Email/Chat when export is ready
+
+#### Monthly Placement Reports
+- **Frequency**: Monthly automated generation
+- **Formats**: HTML and PDF reports
+- **Content**: Company-specific placement statistics
+- **Delivery**: Available for download in company dashboard
+
+### Notification System
+#### Email Notifications
+- SMTP-based email delivery
+- Configurable email templates
+- Failed delivery handling
+- Support for MailHog development setup
+
+#### Google Chat Integration
+- Webhook-based notifications
+- Real-time status updates
+- Export completion alerts
+- Interview reminders
+
+## 🛡️ Security Features
+
+### Authentication & Authorization
+- JWT-based stateless authentication
+- Role-based access control (RBAC)
+- Token expiration management
+- Secure password hashing (Werkzeug)
+
+### Data Protection
+- Input validation and sanitization
+- SQL injection prevention (SQLAlchemy ORM)
+- Cross-origin resource sharing (CORS) configuration
+- Secure file upload handling
+
+### Account Security
+- Account blacklisting for misconduct
+- Admin-controlled company verification
+- Session management
+- Rate limiting considerations
+
+## 📊 Database Schema
+
+### Core Models
+- **Admin**: System administrators
+- **Student**: Student profiles and academic data
+- **Company**: Company profiles and verification status
+- **Placement_drive**: Job posting details and requirements
+- **Application**: Student applications to drives
+- **Drive_eligibility**: Detailed eligibility criteria per drive
+- **ExportJob**: Async export job tracking
+- **PlacementReport**: Monthly report generation tracking
+
+### Key Relationships
+- Students ↔ Applications ↔ Placement Drives ↔ Companies
+- Drive Eligibility → Placement Drives
+- Export Jobs → Users (Students/Companies)
+- Placement Reports → Companies
+
+## 🔧 API Endpoints
+
+### Authentication
+- `POST /api/login` - User authentication
+- `POST /api/register/student` - Student registration
+- `POST /api/register/company` - Company registration
+
+### Student APIs
+- `GET /api/student/dashboard` - Dashboard statistics
+- `GET /api/student/profile` - Profile management
+- `GET /api/student/drives` - Available placement drives
+- `POST /api/student/apply/<drive_id>` - Apply to drive
+- `GET /api/student/applications` - Application history
+- `POST /api/student/exports` - Request CSV export
+
+### Company APIs
+- `GET /api/company/dashboard` - Company dashboard
+- `POST /api/company/create_drive` - Create placement drive
+- `GET /api/company/drives` - Manage drives
+- `GET /api/company/drive/<drive_id>/applicants` - View applicants
+- `PUT /api/company/application/<id>/status` - Update application status
+- `GET /api/company/interviews` - Interview management
+- `GET /api/company/results` - Placement results
+
+### Admin APIs
+- `GET /api/admin/dashboard_stats` - Platform statistics
+- `POST /api/admin/approve_company/<id>` - Approve companies
+- `GET /api/admin/companies` - Company management
+- `GET /api/admin/students` - Student management
+- `GET /api/admin/placement_drives` - Drive oversight
+- `GET /api/admin/applications` - Application monitoring
+
+### Public APIs
+- `GET /api/public/stats` - Public platform statistics
+
+## 🔧 Configuration
+
+### Environment Variables
+```env
+# JWT Authentication
+JWT_SECRET_KEY=your-secure-secret-key
+
+# Redis (used for both caching and Celery)
+REDIS_URL=redis://localhost:6379/0
+
+# Celery Configuration
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+CELERY_TIMEZONE=UTC
+
+# Email Configuration
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USERNAME=user
+SMTP_PASSWORD=pass
+SMTP_USE_TLS=false
+EMAIL_SENDER=noreply@proffquest.local
+
+# Google Chat Integration
+GCHAT_WEBHOOK_URL=your-webhook-url
+```
+
+### Caching System (Flask-Caching + Redis)
+
+All frequently-read endpoints are cached for **5 minutes** using `Flask-Caching` with a Redis backend. When Redis is unavailable the app automatically falls back to an in-process `SimpleCache` so pages still load.
+
+**Cached endpoints** (charts, home page, search bars, dashboards):
+| Endpoint | What it powers |
+|----------|----------------|
+| `GET /api/public/stats` | Home page statistics & Chart.js graphs |
+| `GET /api/admin/dashboard_stats` | Admin dashboard stat cards |
+| `GET /api/admin/applications` | Admin applications-by-status chart |
+| `GET /api/admin/companies` | Admin companies-by-status chart |
+| `GET /api/admin/placement_drives` | Admin drives list |
+| `GET /api/admin/search_companies` | Company search bar |
+| `GET /api/admin/search_students` | Student search bar |
+| `GET /api/company/dashboard` | Company dashboard stats & charts |
+
+**Auto-invalidation**: Every `db.session.commit()` is followed by `clear_all_cache()` which wipes all cached keys. This means if a name, status, or any data changes, the very next request fetches fresh data from the database.
+
+## 📈 Performance Features
+
+### Optimization Strategies
+- **Flask-Caching** with Redis: 5-minute TTL on all read-heavy endpoints
+- Graceful fallback to SimpleCache when Redis is down
+- Auto-invalidation on every database write (`clear_all_cache()`)
+- Lazy loading for SQLAlchemy relationships
+- Async processing via Celery for heavy operations (CSV exports, PDF reports)
+- Pagination for large datasets
+
+### Monitoring & Analytics
+- Application performance tracking
+- User activity monitoring
+- Error logging and handling
+- Background job status monitoring
+
+## 🔄 Development Workflow
+
+### Database Migrations
+- Alembic for database version control
+- Automatic migration generation
+- Safe migration rollback capabilities
+
+### Code Organization
+- Modular backend structure with resources
+- Component-based frontend architecture
+- Utility modules for common functionality
+- Decorators for authentication and caching
+
+### Testing
+- Unit tests for critical functionality
+- API endpoint testing
+- Cache performance testing
+
+## 📝 Development Notes
+
+### Database Relationships
+- **backref**: Single-sided relationship definition (use in one model)
+- **back_populates**: Two-sided relationship definition (use in both models)
+
+### JWT Implementation
+- Role and ID embedded in token payload
+- Stateless authentication for scalability
+- Automatic token validation on protected routes
+
+### Celery Task Management
+- Task retry mechanisms
+- Error handling and logging
+- Job status tracking and notifications
+
+## 🚦 Getting Started Checklist
+
+1. **Environment Setup**
+   - [ ] Install Python 3.8+, Node.js 16+, PostgreSQL, Redis
+   - [ ] Clone repository
+   - [ ] Set up virtual environment
+
+2. **Backend Configuration**
+   - [ ] Install pip dependencies
+   - [ ] Configure environment variables
+   - [ ] Initialize database with default admin
+   - [ ] Start Redis server
+   - [ ] Run Flask application
+
+3. **Background Jobs**
+   - [ ] Start Celery worker
+   - [ ] Start Celery beat scheduler
+   - [ ] Verify job processing
+
+4. **Frontend Setup**
+   - [ ] Install npm dependencies
+   - [ ] Start development server
+   - [ ] Verify API connectivity
+
+5. **Testing**
+   - [ ] Login with default admin credentials
+   - [ ] Test student and company registration
+   - [ ] Create test placement drive
+   - [ ] Test application workflow
+
+
+
+**Proffquest** - Streamlining campus placement, one connection at a time. 🎯
 

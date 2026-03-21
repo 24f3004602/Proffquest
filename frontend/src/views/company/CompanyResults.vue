@@ -7,6 +7,9 @@
     <div v-if="loading" class="loading">Loading results...</div>
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+        <button class="action-btn btn-approve" @click="downloadResultsCsv">Download CSV</button>
+      </div>
       <div class="tab-row">
         <button class="tab-btn" :class="{ active: activeTab === 'Shortlisted' }" @click="activeTab = 'Shortlisted'">Shortlisted</button>
         <button class="tab-btn" :class="{ active: activeTab === 'Interview' }" @click="activeTab = 'Interview'">Interview</button>
@@ -46,9 +49,15 @@
                 <span v-else>No</span>
               </td>
               <td class="actions">
-                <button class="action-btn btn-approve" @click="setStatus(item, 'Offer')">Send Offer</button>
-                <button class="action-btn btn-approve" @click="setStatus(item, 'Placed')">Mark Placed</button>
-                <button class="action-btn btn-reject" @click="setStatus(item, 'Rejected')">Mark Rejected</button>
+                <button
+                  v-for="action in getStatusActions(item.status)"
+                  :key="`${item.application_id}-${action.status}`"
+                  class="action-btn"
+                  :class="action.type === 'reject' ? 'btn-reject' : 'btn-approve'"
+                  @click="setStatus(item, action.status)"
+                >
+                  {{ action.label }}
+                </button>
               </td>
             </tr>
           </tbody>
@@ -60,6 +69,7 @@
 
 <script>
 import api from '@/services/api'
+import { getStatusActions } from '@/utils/formatters'
 
 export default {
   name: 'CompanyResults',
@@ -80,6 +90,7 @@ export default {
     await this.fetchResults()
   },
   methods: {
+    getStatusActions,
     async fetchResults() {
       try {
         const { data } = await api.get('/company/results')
@@ -96,6 +107,21 @@ export default {
         item.status = status
       } catch (err) {
         alert(err.response?.data?.message || 'Failed to update status')
+      }
+    },
+    async downloadResultsCsv() {
+      try {
+        const response = await api.get('/company/results/csv', { responseType: 'blob' })
+        const blobUrl = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.setAttribute('download', `company_results_${new Date().toISOString().slice(0, 10)}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(blobUrl)
+      } catch (err) {
+        this.error = err.response?.data?.message || 'Failed to download CSV'
       }
     }
   }

@@ -21,13 +21,18 @@
 
           <div class="form-group">
             <label for="password">Password</label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              placeholder="Enter your password"
-              required
-            />
+            <div class="password-wrapper">
+              <input
+                id="password"
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Enter your password"
+                required
+              />
+              <button type="button" class="password-toggle" @click="showPassword = !showPassword">
+                {{ showPassword ? '🙈' : '👁️' }}
+              </button>
+            </div>
           </div>
 
           <button type="submit" class="login-btn" :disabled="loading">
@@ -60,6 +65,7 @@ export default {
     return {
       email: '',
       password: '',
+      showPassword: false,
       errorMessage: '',
       loading: false
     }

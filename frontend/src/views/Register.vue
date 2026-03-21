@@ -42,7 +42,12 @@
                             <i class="fas fa-lock"></i>
                             Password
                         </label>
-                        <input v-model="password" type="password" id="password" placeholder="Create a strong password" required />
+                        <div class="password-wrapper">
+                            <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password" placeholder="Create a strong password" required />
+                            <button type="button" class="password-toggle" @click="showPassword = !showPassword">
+                                {{ showPassword ? '🙈' : '👁️' }}
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -59,7 +64,7 @@
                                 <i class="fas fa-calendar"></i>
                                 Year
                             </label>
-                            <input v-model="year_of_study" type="number" id="year_of_study" placeholder="1-4" min="1" max="4" required />
+                            <input v-model="year_of_study" type="number" id="year_of_study" placeholder="1-4" min="1" max="4"  required />
                         </div>
                     </div>
 
@@ -126,15 +131,30 @@
                             <i class="fas fa-lock"></i>
                             Password
                         </label>
-                        <input v-model="password" type="password" id="password" placeholder="Create a strong password" required />
+                        <div class="password-wrapper">
+                            <input v-model="password" :type="showPassword ? 'text' : 'password'" id="password" placeholder="Create a strong password" required />
+                            <button type="button" class="password-toggle" @click="showPassword = !showPassword">
+                                {{ showPassword ? '🙈' : '👁️' }}
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="website">
-                            <i class="fas fa-globe"></i>
-                            Website
-                        </label>
-                        <input v-model="website" type="url" id="website" placeholder="https://yourcompany.com" required />
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="website">
+                                <i class="fas fa-globe"></i>
+                                Website
+                            </label>
+                            <input v-model="website" type="url" id="website" placeholder="https://yourcompany.com" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Location
+                            </label>
+                            <input v-model="location" type="text" id="location" placeholder="e.g., Bangalore, Karnataka" required />
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -181,7 +201,9 @@
                 year_of_study:null,
                 company_name:'',
                 website:'',
+                location:'',
                 description:'',
+                showPassword: false,
                 errorMessage:'',
                 cgpa:null,
                 roll_number:'',
@@ -213,6 +235,7 @@
                             email:this.email,
                             password:this.password,
                             website:this.website,
+                            address:this.location,
                             description:this.description,
                         })
                     }

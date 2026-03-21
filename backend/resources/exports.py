@@ -9,6 +9,21 @@ from models import db, ExportJob, PlacementReport
 from utils.decorators import role_required
 
 
+def _should_use_async_exports():
+    return os.getenv("CELERY_EXPORT_ASYNC", "0").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _dispatch_export_task(task, job):
+    if _should_use_async_exports():
+        try:
+            task.delay(job.id)
+            return
+        except Exception:
+            pass
+
+    task(job.id)
+
+
 class StudentExportApplications(Resource):
     @role_required('student')
     def post(self):
@@ -24,8 +39,14 @@ class StudentExportApplications(Resource):
         db.session.add(job)
         db.session.commit()
 
-        export_student_applications.delay(job.id)
-        return {'job_id': job.id, 'status': job.status}, 202
+        _dispatch_export_task(export_student_applications, job)
+        db.session.refresh(job)
+        return {
+            'job_id': job.id,
+            'status': job.status,
+            'file_path': job.file_path,
+            'error': job.error,
+        }, 202
 
 
 class CompanyExportApplications(Resource):
@@ -42,9 +63,15 @@ class CompanyExportApplications(Resource):
         )
         db.session.add(job)
         db.session.commit()
-        
-        export_company_applications.delay(job.id)
-        return {'job_id': job.id, 'status': job.status}, 202
+
+        _dispatch_export_task(export_company_applications, job)
+        db.session.refresh(job)
+        return {
+            'job_id': job.id,
+            'status': job.status,
+            'file_path': job.file_path,
+            'error': job.error,
+        }, 202
 
 
 class StudentExportJobs(Resource):

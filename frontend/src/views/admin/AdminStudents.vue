@@ -38,8 +38,9 @@
             <td>{{ student.is_blacklisted ? 'Yes' : 'No' }}</td>
             <td class="actions">
               <button @click="openProfile(student)" class="action-btn">View</button>
-              <button v-if="!student.is_blacklisted" @click="blacklistStudent(student.id)" class="blacklist-btn">Blacklist</button>
+              <button v-if="!student.is_blacklisted" @click="blacklistStudent(student.id)" class="action-btn">Blacklist</button>
               <button v-else @click="activateStudent(student.id)" class="activate-btn">Activate</button>
+              <button @click="removeStudent(student.id)" class="action-btn">Remove</button>
             </td>
           </tr>
         </tbody>
@@ -100,6 +101,7 @@
 
 <script>
 import api from '@/services/api'
+import { formatDate } from '@/utils/formatters'
 
 export default {
   name: 'AdminStudents',
@@ -117,11 +119,21 @@ export default {
   methods: {
     async loadStudents() {
       try {
-        const res = await api.get('/admin/search_students')
+        const res = await api.get('/admin/student')
         this.students = res.data
         this.filteredStudents = res.data
       } catch (error) {
         console.error('Error loading students:', error)
+      }
+    },
+    async removeStudent(studentId) {
+      if (confirm('Are you sure you want to remove this student? This action cannot be undone.')) {
+        try {
+          await api.delete(`/admin/student/${studentId}`)
+          await this.loadStudents()
+        } catch (error) {
+          console.error('Error removing student:', error)
+        }
       }
     },
     async searchStudents() {
@@ -173,10 +185,7 @@ export default {
     closeProfile() {
       this.profileModal = { visible: false, data: {}, loading: false, error: null, applications: [], appsLoading: false, appsError: null }
     },
-    formatDate(d) {
-      if (!d) return '—'
-      return new Date(d).toLocaleDateString()
-    }
+    formatDate,
   }
 }
 </script>

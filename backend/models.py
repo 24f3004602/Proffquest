@@ -44,7 +44,7 @@ class Company(db.Model):
     address=db.Column(db.Text)
     status=db.Column(db.String(50),default='pending')#pending,approved,rejected
     is_blacklisted=db.Column(db.Boolean,default=False)
-    placement_drives=db.relationship('Placement_drive',back_populates='company',lazy=True)#
+    placement_drives=db.relationship('Placement_drive',back_populates='company',lazy=True)
 
     def __repr__(self):
         return f'<Company {self.company_name}>'
@@ -58,7 +58,6 @@ class Application(db.Model):
     id=db.Column(db.Integer,nullable=False,primary_key=True)
     student_id=db.Column(db.Integer,db.ForeignKey('students.id'),nullable=False)
     drive_id=db.Column(db.Integer,db.ForeignKey('placement_drives.id'),nullable=False)
-    application_date=db.Column(db.Date,nullable=False,default=datetime.utcnow)
     status=db.Column(db.String(50),default='Applied')#Applied,Shortlisted,Interview,Offer,Rejected,Placed
     applied_at=db.Column(db.DateTime, default=datetime.utcnow)
     shortlisted_at=db.Column(db.DateTime)
@@ -83,9 +82,12 @@ class Placement_drive(db.Model):
     id=db.Column(db.Integer,primary_key=True,nullable=False)
     company_id=db.Column(db.Integer,db.ForeignKey('companies.id'),nullable=False)
     job_title=db.Column(db.String(80),nullable=False)
+    role=db.Column(db.String(80))
     job_description=db.Column(db.Text,nullable=False)
     package_offered=db.Column(db.String(100),nullable=False)
     location=db.Column(db.String(240),nullable=False)
+    job_type=db.Column(db.String(50),default='Full-time')
+    skills_required=db.Column(db.Text)
     rounds=db.Column(db.Integer)
     application_deadline=db.Column(db.DateTime,nullable=False)
     drive_date=db.Column(db.DateTime,nullable=False)
@@ -107,6 +109,7 @@ class Drive_eligibility(db.Model):
     drive_id=db.Column(db.Integer,db.ForeignKey('placement_drives.id'),nullable=False)
     branch=db.Column(db.String(80),nullable=False)
     min_cgpa=db.Column(db.Float,nullable=False)
+    student_status=db.Column(db.String(20),default='studying')
     passing_year=db.Column(db.Integer)
     backlog_allowed=db.Column(db.Boolean,default=False)
     additional_criteria=db.Column(db.Text)
@@ -149,6 +152,3 @@ class PlacementReport(db.Model):
 
     def __repr__(self):
         return f'<PlacementReport {self.company_id} {self.report_month}/{self.report_year}>'
-    
-
-

@@ -42,6 +42,19 @@ package-lock.json
 
 # ── Vue.js / Vite ──
 dist/
+dist-ssr/
+coverage/
+*.local
+*.tsbuildinfo
+.eslintcache
+
+# Frontend test artifacts
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+frontend/__screenshots__/
+
+# Additional JS package manager logs
+pnpm-debug.log*
 
 # ── Database ──
 *.db

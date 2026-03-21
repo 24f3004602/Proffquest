@@ -3,9 +3,14 @@
   <div class="home-page">
     <div class="hero-section">
       <div class="hero-content">
-        <img src="@/assets/logo.jpg" alt="ProffQuest Logo" class="hero-logo" />
+        <p class="hero-eyebrow">Campus Placements Reimagined</p>
         <h1 class="hero-title">Welcome to ProffQuest</h1>
         <p class="hero-subtitle">Bridging the gap between students and companies</p>
+        <div class="hero-highlights">
+          <span>Smart Matching</span>
+          <span>Realtime Insights</span>
+          <span>Faster Hiring</span>
+        </div>
       </div>
     </div>
 
@@ -53,16 +58,6 @@
           </div>
         </div>
 
-        <!-- Top Sectors -->
-        <div class="sectors-section" v-if="stats.top_sectors && stats.top_sectors.length">
-          <h3>Top Hiring Sectors</h3>
-          <div class="sectors-grid">
-            <div class="sector-card" v-for="sector in stats.top_sectors" :key="sector.sector">
-              <div class="sector-name">{{ sector.sector }}</div>
-              <div class="sector-count">{{ sector.count }} drives</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -81,11 +76,6 @@
               <p>Advanced algorithms to match the right candidates with the right opportunities.</p>
             </div>
             <div class="feature-item">
-              <h3>ATS Resume Screener</h3>
-              <p>Analyze your resume against job descriptions to improve your chances.</p>
-              <router-link to="/ats-screener" class="feature-link">Try Now</router-link>
-            </div>
-            <div class="feature-item">
               <h3>User-Friendly Interface</h3>
               <p>Intuitive design that makes navigation and application simple.</p>
             </div>
@@ -102,10 +92,9 @@
               <h2 class="section-title">Student Features</h2>
               <ul class="feature-list">
                 <li>Access to Job Listings</li>
-                <li>Resume Builder and Management</li>
                 <li>Application Tracking System</li>
-                <li>ATS Resume Checker</li>
                 <li>Personal Analytics Dashboard</li>
+                <li>View Placement History</li>
               </ul>
             </div>
             <div class="feature-item">
@@ -113,7 +102,6 @@
               <ul class="feature-list">
                 <li>Post Job Openings</li>
                 <li>Search and Filter Candidates</li>
-                <li>Bulk ATS Screening</li>
                 <li>Analytics & Reporting</li>
                 <li>Interview Management</li>
               </ul>

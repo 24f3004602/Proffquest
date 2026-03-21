@@ -35,8 +35,9 @@
             <td class="actions">
               <button v-if="company.status === 'pending'" @click="approveCompany(company.id)" class="action-btn btn-approve">Approve</button>
               <button v-if="company.status === 'pending'" @click="rejectCompany(company.id)" class="action-btn btn-reject">Reject</button>
-              <button v-if="!company.is_blacklisted" @click="blacklistCompany(company.id)" class="blacklist-btn">Blacklist</button>
-              <button v-else @click="activateCompany(company.id)" class="activate-btn">Activate</button>
+              <button v-if="!company.is_blacklisted" @click="blacklistCompany(company.id)" class="action-btn">Blacklist</button>
+              <button v-else @click="activateCompany(company.id)" class="action-btn">Activate</button>
+              <button @click="removeCompany(company.id)" class="action-btn">Remove</button>
             </td>
           </tr>
         </tbody>
@@ -114,6 +115,16 @@ export default {
         await this.loadCompanies()
       } catch (error) {
         console.error('Error activating company:', error)
+      }
+    },
+    async removeCompany(companyId) {
+      if (confirm('Are you sure you want to remove this company? This action cannot be undone.')) {
+        try {
+          await api.delete(`/admin/company/${companyId}`)
+          await this.loadCompanies()
+        } catch (error) {
+          console.error('Error removing company:', error)
+        }
       }
     }
   }

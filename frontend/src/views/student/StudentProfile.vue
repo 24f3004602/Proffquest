@@ -26,7 +26,6 @@
             <div class="profile-details">
               <div class="detail-row"><span class="detail-label">Email:</span> {{ profile.email }}</div>
               <div class="detail-row"><span class="detail-label">Roll No:</span> {{ profile.roll_number || 'Not set' }}</div>
-              <div class="detail-row"><span class="detail-label">Phone:</span> {{ profile.phone || 'Not set' }}</div>
             </div>
           </div>
 
@@ -93,7 +92,7 @@
               <button type="submit" class="btn" :disabled="saving">
                 {{ saving ? 'Saving...' : 'Save Changes' }}
               </button>
-              <button type="button" class="btn btn-secondary" @click="cancelEdit">Cancel</button>
+              <button type="button" class="btn" @click="cancelEdit">Cancel</button>
             </div>
           </form>
         </div>
@@ -113,8 +112,8 @@
 
         <div class="card student-side-profile">
           <h4>Quick Actions</h4>
-          <button class="btn1" @click="$router.push('/student/drives')">Browse Drives</button>
-          <button class="btn2" @click="$router.push('/student/applications')">View Applications</button>
+          <button class="btn" @click="$router.push('/student/drives')">Browse Drives</button>
+          <button class="btn" @click="$router.push('/student/applications')">View Applications</button>
         </div>
       </aside>
     </div>
@@ -133,10 +132,7 @@ export default {
       profile: {},
       editing: false,
       saving: false,
-      editData: {},
-      historyLoading: true,
-      historyError: null,
-      applications: []
+      editData: {}
     }
   },
   computed: {
@@ -148,13 +144,8 @@ export default {
   },
   async mounted() {
     await this.fetchProfile()
-    await this.fetchHistory()
   },
   methods: {
-    formatDate(d) {
-      if (!d) return '—'
-      return new Date(d).toLocaleDateString()
-    },
     async fetchProfile() {
       try {
         const { data } = await api.get('/student/profile')
@@ -163,20 +154,6 @@ export default {
         this.error = err.response?.data?.message || 'Failed to load profile'
       } finally {
         this.loading = false
-      }
-    },
-    async fetchHistory() {
-      this.historyLoading = true
-      try {
-        const { data } = await api.get('/student/applications')
-        this.applications = (data.applications || []).map(app => ({
-          ...app,
-          last_update: app.placed_at || app.offer_at || app.interview_at || app.shortlisted_at || app.selected_at || app.applied_at
-        }))
-      } catch (err) {
-        this.historyError = err.response?.data?.message || 'Failed to load history'
-      } finally {
-        this.historyLoading = false
       }
     },
     startEdit() {

@@ -20,7 +20,7 @@
         <div v-if="!editing" class="profile-details">
           <div class="detail-row"><span class="detail-label">Email:</span> {{ profile.email }}</div>
           <div class="detail-row"><span class="detail-label">HR Contact:</span> {{ profile.hr_name }}</div>
-          <div class="detail-row"><span class="detail-label">Address:</span> {{ profile.address || 'N/A' }}</div>
+          <div class="detail-row"><span class="detail-label">Location:</span> {{ profile.address || 'N/A' }}</div>
           <div class="detail-row">
             <span class="detail-label">Description:</span>
             <span>{{ profile.description || 'N/A' }}</span>
@@ -58,7 +58,7 @@
                 <input v-model="editData.website" id="website" type="url" required>
               </div>
               <div class="form-group">
-                <label for="address">Address</label>
+                <label for="address">Location</label>
                 <input v-model="editData.address" id="address" type="text">
               </div>
             </div>

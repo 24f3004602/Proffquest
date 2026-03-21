@@ -6,7 +6,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import json
 
 
-
 class Login(Resource):
     def post(self):
         try:
@@ -101,6 +100,7 @@ class CompanyRegister(Resource):
                 password=generate_password_hash(data.get('password')),
                 description=data.get('description'),
                 website=data.get('website'),
+                address=data.get('address'),
                 status='pending',
                 hr_name=data.get('hr_name')
             )

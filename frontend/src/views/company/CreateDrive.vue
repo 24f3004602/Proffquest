@@ -1,7 +1,7 @@
 <template>
   <div class="create-drive-page">
     <div class="page-header">
-      <h1>Create Placement Drive</h1>
+      <h1>{{ editing ? 'Edit Placement Drive' : 'Create Placement Drive' }}</h1>
       <router-link to="/company/dashboard" class="back-link">← Back to Dashboard</router-link>
     </div>
 
@@ -13,15 +13,26 @@
             <input v-model="driveData.job_title" type="text" id="job_title" required>
           </div>
           <div class="form-group">
+            <label for="role">Role:</label>
+            <input v-model="driveData.role" type="text" id="role" placeholder="e.g., Software Developer">
+          </div>
+          <div class="form-group">
             <label for="package_offered">Package Offered:</label>
             <input v-model="driveData.package_offered" type="text" id="package_offered" required>
           </div>
-        </div>
-
-        <div class="form-row">
           <div class="form-group">
             <label for="location">Location:</label>
             <input v-model="driveData.location" type="text" id="location" required>
+          </div>
+          <div class="form-group">
+            <label for="job_type">Job Type:</label>
+            <select v-model="driveData.job_type" id="job_type" required>
+              <option value="Full-time">Full-time</option>
+              <option value="Internship">Internship</option>
+              <option value="Internship + PPO">Internship + PPO</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Contract">Contract</option>
+            </select>
           </div>
           <div class="form-group">
             <label for="max_applicants">Max Applicants (optional):</label>
@@ -52,6 +63,11 @@
           <textarea v-model="driveData.job_description" id="job_description" required rows="4"></textarea>
         </div>
 
+        <div class="form-group">
+          <label for="skills_required">Skills Required:</label>
+          <input v-model="driveData.skills_required" type="text" id="skills_required" placeholder="e.g., Java, Python, SQL, REST APIs">
+        </div>
+
         <div class="eligibility-section">
           <h3 v-if="driveData.eligibility.length > 0">Eligibility Criteria</h3>
           <div v-for="(el, index) in driveData.eligibility" :key="index" class="card eligibility-item">
@@ -68,8 +84,12 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label :for="'passing_year_' + index">Passing Year:</label>
-                <input v-model.number="el.passing_year" type="number" :id="'passing_year_' + index">
+                <label :for="'student_status_' + index">Student Status (optional):</label>
+                <select v-model="el.student_status" :id="'student_status_' + index">
+                  <option value="">Any</option>
+                  <option value="studying">Studying</option>
+                  <option value="passed">Passed</option>
+                </select>
               </div>
               <div class="form-group">
                 <label>Backlog Allowed</label>
@@ -91,7 +111,7 @@
 
         <div class="form-actions">
           <button type="submit" class="btn" :disabled="loading">
-            {{ loading ? 'Creating...' : 'Create Drive' }}
+            {{ loading ? (editing ? 'Updating...' : 'Creating...') : (editing ? 'Update Drive' : 'Create Drive') }}
           </button>
           <button type="button" class="btn" @click="goToDashboard">Cancel</button>
         </div>
@@ -108,22 +128,47 @@ export default {
   data() {
     return {
       loading: false,
+      editing: false,
+      editId: null,
       driveData: {
         job_title: '',
+        role: '',
         job_description: '',
         package_offered: '',
         location: '',
+        job_type: 'Full-time',
+        skills_required: '',
         application_deadline: '',
         drive_date: '',
         max_applicants: null,
         rounds: null,
-        eligibility: [{ branch: '', min_cgpa: 0.0, passing_year: null, backlog_allowed: false, additional_criteria: '' }]
+        eligibility: [{ branch: '', min_cgpa: 0.0, student_status: '', backlog_allowed: false, additional_criteria: '' }]
+      }
+    }
+  },
+  async mounted() {
+    const editId = this.$route.query.edit
+    if (editId) {
+      this.editing = true
+      this.editId = editId
+      this.loading = true
+      try {
+        const { data } = await api.get(`/company/drive/${editId}`)
+        this.driveData = { ...data.drive }
+        // Ensure eligibility array has at least one entry
+        if (!this.driveData.eligibility || this.driveData.eligibility.length === 0) {
+          this.driveData.eligibility = [this.newEligibility()]
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Failed to load drive for editing')
+      } finally {
+        this.loading = false
       }
     }
   },
   methods: {
     newEligibility() {
-      return { branch: '', min_cgpa: 0.0, passing_year: null, backlog_allowed: false, additional_criteria: '' }
+      return { branch: '', min_cgpa: 0.0, student_status: '', backlog_allowed: false, additional_criteria: '' }
     },
     goToDashboard() { this.$router.push('/company/dashboard') },
     addEligibility() { this.driveData.eligibility.push(this.newEligibility()) },
@@ -135,10 +180,14 @@ export default {
     async createDrive() {
       this.loading = true
       try {
-        await api.post('/company/create_drive', this.driveData)
+        if (this.editing && this.editId) {
+          await api.put(`/company/drive/${this.editId}`, this.driveData)
+        } else {
+          await api.post('/company/create_drive', this.driveData)
+        }
         this.$router.push('/company/dashboard')
       } catch (err) {
-        alert(err.response?.data?.message || 'Failed to create drive')
+        alert(err.response?.data?.message || 'Failed to save drive')
       } finally {
         this.loading = false
       }
