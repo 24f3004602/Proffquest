@@ -38,8 +38,8 @@
             <td>{{ student.is_blacklisted ? 'Yes' : 'No' }}</td>
             <td class="actions">
               <button @click="openProfile(student)" class="action-btn">View</button>
-              <button v-if="!student.is_blacklisted" @click="blacklistStudent(student.id)" class="action-btn">Blacklist</button>
-              <button v-else @click="activateStudent(student.id)" class="activate-btn">Activate</button>
+              <button v-if="!student.is_blacklisted" @click="blacklistStudent(student.id)" class="action-btn btn-blacklist">Blacklist</button>
+              <button v-else @click="activateStudent(student.id)" class="action-btn btn-activate">Activate</button>
               <button @click="removeStudent(student.id)" class="action-btn">Remove</button>
             </td>
           </tr>

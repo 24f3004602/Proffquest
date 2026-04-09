@@ -3,8 +3,9 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash
 
-from models import db
+from models import db, Admin
 from celery_app import make_celery
 from utils.cache import init_cache
 from resources.auth import *
@@ -103,8 +104,29 @@ api.add_resource(PublicStats, "/api/public/stats")
 # ---------------------------------------------------------------------------
 # Create tables
 # ---------------------------------------------------------------------------
+
+
+def ensure_default_admin():
+    admin_email = 'admin@123'
+    admin_password = 'admin123'
+
+    if not admin_email or not admin_password:
+        return
+
+    existing_admin = Admin.query.filter_by(email=admin_email).first()
+    if existing_admin:
+        return
+
+    default_admin = Admin()
+    default_admin.email = admin_email
+    default_admin.password = generate_password_hash(admin_password)
+    db.session.add(default_admin)
+    db.session.commit()
+
+
 with app.app_context():
     db.create_all()
+    ensure_default_admin()
 
 if __name__ == "__main__":
     app.run( debug=True)

@@ -8,6 +8,14 @@
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
       <!-- Top Summary Cards -->
+       <div>
+        <h2>Welcome, {{ company.company_name }}</h2>
+        <p class="company-info">
+          <h4><strong>HR Name:</strong> {{ company.hr_name }}</h4> 
+          <h4><strong>Email:</strong> {{ company.email }}  </h4>
+          <h4><strong>Website:</strong> <a :href="company.website" target="_blank" rel="noopener noreferrer">{{ company.website }}</a> <br></h4>
+        </p>
+       </div>
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-content">

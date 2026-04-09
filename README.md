@@ -17,13 +17,12 @@ Proffquest/
 │   ├── utils/
 │   │   ├── cache.py              # Flask-Caching with Redis (init, clear, key builder)
 │   │   ├── decorators.py         # @role_required JWT decorator
-│   │   └── notifications.py     # Email (SMTP) & Google Chat webhook helpers
-│   ├── migrations/               # Alembic database migrations
-│   │   └── versions/
+│   │   └── notifications.py      # Email (SMTP) & Google Chat webhook helpers
 │   ├── exports/                  # Generated CSV export files (per user)
-│   ├── app.py                    # Flask app factory, route registration, extensions
+│   ├── instance/                 # SQLite database file (app.db)
+│   ├── reports/                  # Generated monthly reports (HTML/PDF)
+│   ├── app.py                    # Flask app setup, route registration, extensions
 │   ├── celery_app.py             # Celery configuration & beat schedule
-│   ├── default_admin.py          # Seed script for default admin account
 │   ├── models.py                 # SQLAlchemy models (8 tables)
 │   ├── tasks.py                  # Celery tasks (reminders, exports, reports)
 │   └── requirements.txt          # Python dependencies
@@ -32,7 +31,7 @@ Proffquest/
 │   │   ├── assets/               # Static assets (logo, global CSS)
 │   │   ├── router/index.js       # Vue Router with role-based guards
 │   │   ├── services/api.js       # Axios instance with JWT interceptor
-│   │   ├── stores/auth.js        # Pinia auth store (login, logout, role)
+│   │   ├── stores/auth.js        # Reactive auth state store (localStorage-backed)
 │   │   ├── views/
 │   │   │   ├── admin/            # Admin pages (dashboard, companies, students, drives, applications)
 │   │   │   ├── company/          # Company pages (dashboard, drives, interviews, results, profile)
@@ -40,7 +39,7 @@ Proffquest/
 │   │   │   ├── Login.vue
 │   │   │   └── Register.vue
 │   │   ├── App.vue               # Root component
-│   │   ├── home.vue              # Public landing page with charts
+│   │   ├── Home.vue              # Public landing page with charts
 │   │   ├── main.js               # Vue app entry point
 │   │   └── NavBar.vue            # Navigation bar (role-aware)
 │   ├── index.html
@@ -53,10 +52,10 @@ Proffquest/
 ## 🏗️ Architecture
 
 ### Technology Stack
-- **Frontend**: Vue.js 3 (Composition API + Options API), Vue Router, Pinia, Chart.js, Vite
+- **Frontend**: Vue.js 3, Vue Router, Axios, Chart.js, Vite
 - **Backend**: Flask, Flask-RESTful, SQLAlchemy ORM
-- **Database**: SQLite (dev) / PostgreSQL (prod), Alembic migrations
-- **Caching**: Flask-Caching with Redis backend (5-min TTL, auto-invalidation)
+- **Database**: SQLite (configured by default), Flask-Migrate integrated
+- **Caching**: Flask-Caching with Redis backend (5-min TTL)
 - **Authentication**: JWT (Flask-JWT-Extended), role-based access control
 - **Background Jobs**: Celery with Redis broker, Celery Beat scheduler
 - **Notifications**: SMTP email, Google Chat webhooks
@@ -80,7 +79,7 @@ Frontend (Vue.js + Vite) ─── REST API ──→ Backend (Flask)
 
 ### Prerequisites
 - Python 3.8+
-- Node.js 16+
+- Node.js 20.19+ (or 22.12+)
 - Redis
 
 ### Backend Setup
@@ -103,27 +102,23 @@ Frontend (Vue.js + Vite) ─── REST API ──→ Backend (Flask)
    EMAIL_SENDER=noreply@proffquest.local
    GCHAT_WEBHOOK_URL=your-webhook-url
    ```
-4. Initialize the database and create default admin:
-   ```bash
-   python default_admin.py
-   ```
-5. Start the Flask application:
+4. Start the Flask application (tables are auto-created on startup via `db.create_all()`):
    ```bash
    python app.py
    ```
 
 ### Background Jobs Setup
-1. Start Redis server in wsl terminal:
+1. Start Redis server:
    ```bash
    redis-server
    ```
-2. Start Celery worker:
+2. Start Celery worker (from the `backend` directory):
    ```bash
-   celery -A app:celery worker --pool=solo --loglevel=info
+   celery -A app.celery worker --pool=solo --loglevel=info
    ```
-3. Start Celery Beat scheduler:
+3. Start Celery Beat scheduler (from the `backend` directory):
    ```bash
-   celery -A app:celery beat --loglevel=info
+   celery -A app.celery beat --loglevel=info
    ```
 
 ### Frontend Setup
@@ -140,7 +135,7 @@ Frontend (Vue.js + Vite) ─── REST API ──→ Backend (Flask)
    npm run dev
    ```
 
-### Default Admin Credentials
+### Default Admin Credentials (for existing local `backend/instance/app.db` only)
 - **Email**: admin@1234
 - **Password**: admin1234
 
@@ -261,22 +256,32 @@ Frontend (Vue.js + Vite) ─── REST API ──→ Backend (Flask)
 
 ### Automated Tasks
 #### Interview Reminders
-- **Frequency**: Every 24 hours
+- **Schedule**: Managed by Celery Beat (`tasks.send_interview_reminders`, currently default `crontab()` i.e., every minute)
 - **Function**: Sends reminder notifications for upcoming interviews
 - **Channels**: Email and Google Chat notifications
 - **Logic**: Checks for interviews scheduled within 24 hours
 
+#### Deadline Reminders
+- **Schedule**: Managed by Celery Beat (`tasks.send_deadline_reminders`, currently default `crontab()` i.e., every minute)
+- **Function**: Sends reminders for drives with deadlines in the next 3 days
+- **Channels**: Email and Google Chat notifications
+
 #### CSV Export Processing
 - **Trigger**: User-initiated export requests
-- **Processing**: Async generation of large CSV files
+- **Processing**: Runs synchronously by default; async dispatch when `CELERY_EXPORT_ASYNC=1`
 - **Status Tracking**: Queued → Processing → Completed/Failed
 - **Notification**: Email/Chat when export is ready
 
 #### Monthly Placement Reports
-- **Frequency**: Monthly automated generation
+- **Schedule**: Managed by Celery Beat (`tasks.generate_monthly_placement_reports`, currently default `crontab()` i.e., every minute)
 - **Formats**: HTML and PDF reports
 - **Content**: Company-specific placement statistics
 - **Delivery**: Available for download in company dashboard
+
+#### Monthly Admin Activity Report
+- **Schedule**: Managed by Celery Beat (`tasks.generate_admin_monthly_report`, currently default `crontab()` i.e., every minute)
+- **Format**: HTML report (saved under `backend/reports/admin/...`)
+- **Delivery**: Notified to admins via email and Google Chat
 
 ### Notification System
 #### Email Notifications
@@ -343,21 +348,31 @@ Frontend (Vue.js + Vite) ─── REST API ──→ Backend (Flask)
 - `POST /api/student/apply/<drive_id>` - Apply to drive
 - `GET /api/student/applications` - Application history
 - `POST /api/student/exports` - Request CSV export
+- `GET /api/student/exports/jobs` - List export jobs
+- `GET /api/student/exports/<job_id>/download` - Download completed export
 
 ### Company APIs
 - `GET /api/company/dashboard` - Company dashboard
 - `POST /api/company/create_drive` - Create placement drive
 - `GET /api/company/drives` - Manage drives
 - `GET /api/company/drive/<drive_id>/applicants` - View applicants
+- `GET /api/company/drive/<drive_id>` - Drive details
 - `PUT /api/company/application/<id>/status` - Update application status
 - `GET /api/company/interviews` - Interview management
 - `GET /api/company/results` - Placement results
+- `GET /api/company/results/csv` - Export placement results CSV
+- `POST /api/company/exports` - Request applications export
+- `GET /api/company/exports/jobs` - List export jobs
+- `GET /api/company/exports/<job_id>/download` - Download completed export
+- `GET /api/company/reports` - List generated monthly reports
+- `GET /api/company/reports/<report_id>/download` - Download report file
 
 ### Admin APIs
 - `GET /api/admin/dashboard_stats` - Platform statistics
 - `POST /api/admin/approve_company/<id>` - Approve companies
 - `GET /api/admin/companies` - Company management
-- `GET /api/admin/students` - Student management
+- `GET /api/admin/student` - Student management
+- `GET /api/admin/student/<student_id>` - Single student profile
 - `GET /api/admin/placement_drives` - Drive oversight
 - `GET /api/admin/applications` - Application monitoring
 
@@ -406,18 +421,19 @@ All frequently-read endpoints are cached for **5 minutes** using `Flask-Caching`
 | `GET /api/admin/search_companies` | Company search bar |
 | `GET /api/admin/search_students` | Student search bar |
 | `GET /api/company/dashboard` | Company dashboard stats & charts |
+| `GET /api/student/dashboard` | Student dashboard cards and stats |
+| `GET /api/student/drives` | Student drives listing |
 
-**Auto-invalidation**: Every `db.session.commit()` is followed by `clear_all_cache()` which wipes all cached keys. This means if a name, status, or any data changes, the very next request fetches fresh data from the database.
+**Cache invalidation**: Write endpoints clear cached data explicitly using `cache.clear()` after updates. If you add a new mutating endpoint, add cache invalidation there as well.
 
 ## 📈 Performance Features
 
 ### Optimization Strategies
 - **Flask-Caching** with Redis: 5-minute TTL on all read-heavy endpoints
 - Graceful fallback to SimpleCache when Redis is down
-- Auto-invalidation on every database write (`clear_all_cache()`)
+- Explicit cache invalidation in mutating endpoints (`cache.clear()`)
 - Lazy loading for SQLAlchemy relationships
 - Async processing via Celery for heavy operations (CSV exports, PDF reports)
-- Pagination for large datasets
 
 ### Monitoring & Analytics
 - Application performance tracking
@@ -428,9 +444,9 @@ All frequently-read endpoints are cached for **5 minutes** using `Flask-Caching`
 ## 🔄 Development Workflow
 
 ### Database Migrations
-- Alembic for database version control
-- Automatic migration generation
-- Safe migration rollback capabilities
+- Flask-Migrate is configured in `backend/app.py`
+- Migration files are not currently included in this repository snapshot
+- The app also creates tables at startup using `db.create_all()`
 
 ### Code Organization
 - Modular backend structure with resources
@@ -462,14 +478,14 @@ All frequently-read endpoints are cached for **5 minutes** using `Flask-Caching`
 ## 🚦 Getting Started Checklist
 
 1. **Environment Setup**
-   - [ ] Install Python 3.8+, Node.js 16+, PostgreSQL, Redis
+   - [ ] Install Python 3.8+, Node.js 20.19+ (or 22.12+), Redis
    - [ ] Clone repository
    - [ ] Set up virtual environment
 
 2. **Backend Configuration**
    - [ ] Install pip dependencies
    - [ ] Configure environment variables
-   - [ ] Initialize database with default admin
+   - [ ] Start Flask app once to initialize SQLite tables
    - [ ] Start Redis server
    - [ ] Run Flask application
 
@@ -484,7 +500,7 @@ All frequently-read endpoints are cached for **5 minutes** using `Flask-Caching`
    - [ ] Verify API connectivity
 
 5. **Testing**
-   - [ ] Login with default admin credentials
+   - [ ] Login with an existing admin account in your local database
    - [ ] Test student and company registration
    - [ ] Create test placement drive
    - [ ] Test application workflow

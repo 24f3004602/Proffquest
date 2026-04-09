@@ -8,7 +8,7 @@
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-        <button class="action-btn btn-approve" @click="downloadResultsCsv">Download CSV</button>
+        <button class="action-btn " @click="downloadResultsCsv">Download CSV</button>
       </div>
       <div class="tab-row">
         <button class="tab-btn" :class="{ active: activeTab === 'Shortlisted' }" @click="activeTab = 'Shortlisted'">Shortlisted</button>
