@@ -4,7 +4,6 @@ from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-
 from models import db, Admin
 from celery_app import make_celery
 from utils.cache import init_cache
@@ -15,17 +14,13 @@ from resources.student import *
 from resources.exports import *
 from resources.analytics import *
 
-# ---------------------------------------------------------------------------
 # App & config
-# ---------------------------------------------------------------------------
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = "secret-key"
 
-# ---------------------------------------------------------------------------
 # Extensions
-# ---------------------------------------------------------------------------
 db.init_app(app)
 migrate = Migrate(app, db)
 jwt = JWTManager(app)
@@ -33,15 +28,13 @@ api = Api(app)
 CORS(app, supports_credentials=True, origins="*")
 init_cache(app)
 
-# ---------------------------------------------------------------------------
 # Celery
-# ---------------------------------------------------------------------------
 celery = make_celery(app)
 import tasks  
 
-# ---------------------------------------------------------------------------
+
 # Routes
-# ---------------------------------------------------------------------------
+
 # Auth
 api.add_resource(Login, "/api/login")
 api.add_resource(StudentRegister, "/api/register/student")
@@ -100,10 +93,6 @@ api.add_resource(StudentExportDownload, "/api/student/exports/<int:job_id>/downl
 
 # Public API (no auth required)
 api.add_resource(PublicStats, "/api/public/stats")
-
-# ---------------------------------------------------------------------------
-# Create tables
-# ---------------------------------------------------------------------------
 
 
 def ensure_default_admin():

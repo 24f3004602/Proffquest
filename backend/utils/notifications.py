@@ -7,7 +7,6 @@ GCHAT_URL = os.getenv("GCHAT_WEBHOOK_URL", "")
 
 
 def send_gchat(webhook_url, message):
-    """Send a message to Google Chat via webhook."""
     if not webhook_url:
         print(f"[notifications] GChat webhook not configured. Message: {message}")
         return False
@@ -21,7 +20,6 @@ def send_gchat(webhook_url, message):
 
 
 def send_email(to_email, subject, body):
-    """Send an email via SMTP (MailHog-compatible by default)."""
     if not to_email:
         print("[notifications] Recipient email is missing")
         return False
@@ -53,6 +51,5 @@ def send_email(to_email, subject, body):
 
 
 def notify(recipient_email, subject, body):
-    """Send both GChat and email notification."""
     send_gchat(GCHAT_URL, f"{subject}: {body}")
     send_email(recipient_email, subject, body)

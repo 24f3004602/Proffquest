@@ -19,7 +19,6 @@ def init_cache(app):
             cache.set('_ping', 1, timeout=5)
             cache.delete('_ping')
     except Exception:
-        # Redis unreachable → fall back to in-process simple cache
         app.config['CACHE_TYPE'] = 'SimpleCache'
         app.config['CACHE_DEFAULT_TIMEOUT'] = CACHE_TTL
         cache.init_app(app)

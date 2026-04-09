@@ -1,7 +1,3 @@
-"""
-Public and Analytics API resources.
-Provides public aggregated statistics.
-"""
 from flask_restful import Resource
 from models import Student, Company, Placement_drive, Application
 from datetime import datetime
