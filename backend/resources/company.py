@@ -92,6 +92,7 @@ class CompanyDashboard(Resource):
         return {
             'company': {
                 'id': company.id,
+                'email': company.email,
                 'company_name': company.company_name,
                 'hr_name': company.hr_name,
                 'website': company.website,

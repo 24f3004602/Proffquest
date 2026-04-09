@@ -24,5 +24,5 @@ def init_cache(app):
         app.config['CACHE_DEFAULT_TIMEOUT'] = CACHE_TTL
         cache.init_app(app)
 
-def make_search_cache_key():
+def make_search_cache_key(*args, **kwargs):
     return f"pq:search:{request.full_path}"
