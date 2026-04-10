@@ -143,9 +143,6 @@ class RemoveCompany(Resource):
             drives = Placement_drive.query.filter_by(company_id=company_id).all()
             drive_ids = [drive.id for drive in drives]
 
-            PlacementReport.query.filter_by(company_id=company_id).delete(synchronize_session=False)
-            ExportJob.query.filter_by(requester_role='company', requester_id=company_id).delete(synchronize_session=False)
-
             if drive_ids:
                 Drive_eligibility.query.filter(Drive_eligibility.drive_id.in_(drive_ids)).delete(synchronize_session=False)
                 Application.query.filter(Application.drive_id.in_(drive_ids)).delete(synchronize_session=False)

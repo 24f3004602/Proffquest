@@ -1,208 +1,136 @@
 import json
 import os
+from datetime import datetime
+
 from flask import send_file
-from flask_restful import Resource
 from flask_jwt_extended import get_jwt_identity
-from tasks import export_student_applications,export_company_applications
-from models import db, ExportJob, PlacementReport
+from flask_restful import Resource
+
+from tasks import generate_company_applications_export, generate_student_applications_export
 from utils.decorators import role_required
 
 
-def _should_use_async_exports():
-    return os.getenv("CELERY_EXPORT_ASYNC", "0").strip().lower() in {"1", "true", "yes", "on"}
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def _dispatch_export_task(task, job):
-    if _should_use_async_exports():
+def _company_report_folder(company_id):
+    return os.path.join(_BASE_DIR, "reports", f"company_{company_id}")
+
+
+def _list_company_reports_from_files(company_id):
+    folder = _company_report_folder(company_id)
+    if not os.path.isdir(folder):
+        return []
+
+    reports = []
+    for item in os.listdir(folder):
+        report_dir = os.path.join(folder, item)
+        if not os.path.isdir(report_dir):
+            continue
+
+        parts = item.split("_")
+        if len(parts) != 2:
+            continue
+
         try:
-            task.delay(job.id)
-            return
-        except Exception:
-            pass
+            year = int(parts[0])
+            month = int(parts[1])
+        except ValueError:
+            continue
 
-    task(job.id)
+        if month < 1 or month > 12:
+            continue
+
+        html_path = os.path.join(report_dir, "report.html")
+        pdf_path = os.path.join(report_dir, "report.pdf")
+        has_html = os.path.exists(html_path)
+        has_pdf = os.path.exists(pdf_path)
+
+        if not has_html and not has_pdf:
+            continue
+
+        completed_at = None
+        if has_pdf:
+            completed_at = datetime.utcfromtimestamp(os.path.getmtime(pdf_path)).isoformat()
+        elif has_html:
+            completed_at = datetime.utcfromtimestamp(os.path.getmtime(html_path)).isoformat()
+
+        reports.append(
+            {
+                "id": year * 100 + month,
+                "month": month,
+                "year": year,
+                "status": "completed",
+                "html_path": html_path if has_html else None,
+                "pdf_path": pdf_path if has_pdf else None,
+                "error": None,
+                "created_at": completed_at,
+                "completed_at": completed_at,
+            }
+        )
+
+    reports.sort(key=lambda report: (report["year"], report["month"]), reverse=True)
+    return reports
 
 
 class StudentExportApplications(Resource):
-    @role_required('student')
+    @role_required("student")
     def post(self):
         identity = json.loads(get_jwt_identity())
-        student_id = identity['id']
+        student_id = identity["id"]
 
-        job = ExportJob(
-            requester_role='student',
-            requester_id=student_id,
-            job_type='student_applications',
-            status='queued'
-        )
-        db.session.add(job)
-        db.session.commit()
+        try:
+            file_path = generate_student_applications_export(student_id)
+        except ValueError as exc:
+            return {"message": str(exc)}, 404
+        except Exception as exc:
+            return {"message": "Failed to export applications", "error": str(exc)}, 500
 
-        _dispatch_export_task(export_student_applications, job)
-        db.session.refresh(job)
-        return {
-            'job_id': job.id,
-            'status': job.status,
-            'file_path': job.file_path,
-            'error': job.error,
-        }, 202
+        return send_file(file_path, as_attachment=True)
 
 
 class CompanyExportApplications(Resource):
-    @role_required('company')
+    @role_required("company")
     def post(self):
         identity = json.loads(get_jwt_identity())
-        company_id = identity['id']
+        company_id = identity["id"]
 
-        job = ExportJob(
-            requester_role='company',
-            requester_id=company_id,
-            job_type='company_applications',
-            status='queued'
-        )
-        db.session.add(job)
-        db.session.commit()
+        try:
+            file_path = generate_company_applications_export(company_id)
+        except ValueError as exc:
+            return {"message": str(exc)}, 404
+        except Exception as exc:
+            return {"message": "Failed to export applications", "error": str(exc)}, 500
 
-        _dispatch_export_task(export_company_applications, job)
-        db.session.refresh(job)
-        return {
-            'job_id': job.id,
-            'status': job.status,
-            'file_path': job.file_path,
-            'error': job.error,
-        }, 202
-
-
-class StudentExportJobs(Resource):
-    @role_required('student')
-    def get(self):
-        identity = json.loads(get_jwt_identity())
-        student_id = identity['id']
-
-        jobs = ExportJob.query.filter_by(
-            requester_role='student', requester_id=student_id
-        ).order_by(ExportJob.created_at.desc()).all()
-
-        return {
-            'jobs': [
-                {
-                    'id': job.id,
-                    'job_type': job.job_type,
-                    'status': job.status,
-                    'file_path': job.file_path,
-                    'error': job.error,
-                    'created_at': job.created_at.isoformat() if job.created_at else None,
-                    'completed_at': job.completed_at.isoformat() if job.completed_at else None,
-                }
-                for job in jobs
-            ]
-        }
-
-
-class CompanyExportJobs(Resource):
-    @role_required('company')
-    def get(self):
-        identity = json.loads(get_jwt_identity())
-        company_id = identity['id']
-
-        jobs = ExportJob.query.filter_by(
-            requester_role='company', requester_id=company_id
-        ).order_by(ExportJob.created_at.desc()).all()
-
-        return {
-            'jobs': [
-                {
-                    'id': job.id,
-                    'job_type': job.job_type,
-                    'status': job.status,
-                    'file_path': job.file_path,
-                    'error': job.error,
-                    'created_at': job.created_at.isoformat() if job.created_at else None,
-                    'completed_at': job.completed_at.isoformat() if job.completed_at else None,
-                }
-                for job in jobs
-            ]
-        }
-
-
-class StudentExportDownload(Resource):
-    @role_required('student')
-    def get(self, job_id):
-        identity = json.loads(get_jwt_identity())
-        student_id = identity['id']
-
-        job = ExportJob.query.filter_by(
-            id=job_id, requester_role='student', requester_id=student_id
-        ).first_or_404()
-
-        if job.status != 'completed' or not job.file_path:
-            return {'message': 'Export not ready'}, 400
-        if not os.path.exists(job.file_path):
-            return {'message': 'Export file missing'}, 404
-
-        return send_file(job.file_path, as_attachment=True)
-
-
-class CompanyExportDownload(Resource):
-    @role_required('company')
-    def get(self, job_id):
-        identity = json.loads(get_jwt_identity())
-        company_id = identity['id']
-
-        job = ExportJob.query.filter_by(
-            id=job_id, requester_role='company', requester_id=company_id
-        ).first_or_404()
-
-        if job.status != 'completed' or not job.file_path:
-            return {'message': 'Export not ready'}, 400
-        if not os.path.exists(job.file_path):
-            return {'message': 'Export file missing'}, 404
-
-        return send_file(job.file_path, as_attachment=True)
+        return send_file(file_path, as_attachment=True)
 
 
 class CompanyReportsList(Resource):
-    @role_required('company')
+    @role_required("company")
     def get(self):
         identity = json.loads(get_jwt_identity())
-        company_id = identity['id']
+        company_id = identity["id"]
 
-        reports = PlacementReport.query.filter_by(
-            company_id=company_id
-        ).order_by(PlacementReport.created_at.desc()).all()
-
-        return {
-            'reports': [
-                {
-                    'id': report.id,
-                    'month': report.report_month,
-                    'year': report.report_year,
-                    'status': report.status,
-                    'html_path': report.html_path,
-                    'pdf_path': report.pdf_path,
-                    'error': report.error,
-                    'created_at': report.created_at.isoformat() if report.created_at else None,
-                    'completed_at': report.completed_at.isoformat() if report.completed_at else None,
-                }
-                for report in reports
-            ]
-        }
+        return {"reports": _list_company_reports_from_files(company_id)}
 
 
 class CompanyReportDownload(Resource):
-    @role_required('company')
+    @role_required("company")
     def get(self, report_id):
         identity = json.loads(get_jwt_identity())
-        company_id = identity['id']
+        company_id = identity["id"]
 
-        report = PlacementReport.query.filter_by(
-            id=report_id, company_id=company_id
-        ).first_or_404()
+        year = report_id // 100
+        month = report_id % 100
+        if month < 1 or month > 12:
+            return {"message": "Report not found"}, 404
 
-        file_path = report.pdf_path or report.html_path
-        if report.status != 'completed' or not file_path:
-            return {'message': 'Report not ready'}, 400
+        report_dir = os.path.join(_company_report_folder(company_id), f"{year}_{month:02d}")
+        pdf_path = os.path.join(report_dir, "report.pdf")
+        html_path = os.path.join(report_dir, "report.html")
+        file_path = pdf_path if os.path.exists(pdf_path) else html_path
+
         if not os.path.exists(file_path):
-            return {'message': 'Report file missing'}, 404
+            return {"message": "Report file missing"}, 404
 
         return send_file(file_path, as_attachment=True)

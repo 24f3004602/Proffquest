@@ -19,6 +19,93 @@ except Exception:
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+def generate_student_applications_export(student_id):
+    student = Student.query.get(student_id)
+    if not student:
+        raise ValueError("Student not found")
+
+    export_dir = os.path.join(_BASE_DIR, "exports", f"student_{student.id}")
+    os.makedirs(export_dir, exist_ok=True)
+    filename = f"applications_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    file_path = os.path.join(export_dir, filename)
+
+    applications = Application.query.filter_by(student_id=student.id).order_by(
+        Application.applied_at.desc()
+    ).all()
+
+    with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "application_id",
+            "job_title",
+            "company_name",
+            "status",
+            "applied_at",
+            "interview_schedule",
+            "offer_at",
+            "placed_at",
+        ])
+        for app in applications:
+            drive = Placement_drive.query.get(app.drive_id)
+            writer.writerow([
+                app.id,
+                drive.job_title if drive else "",
+                drive.company.company_name if drive else "",
+                app.status,
+                app.applied_at.isoformat() if app.applied_at else "",
+                app.interview_schedule.isoformat() if app.interview_schedule else "",
+                app.offer_at.isoformat() if app.offer_at else "",
+                app.placed_at.isoformat() if app.placed_at else "",
+            ])
+
+    return file_path
+
+
+def generate_company_applications_export(company_id):
+    company = Company.query.get(company_id)
+    if not company:
+        raise ValueError("Company not found")
+
+    export_dir = os.path.join(_BASE_DIR, "exports", f"company_{company.id}")
+    os.makedirs(export_dir, exist_ok=True)
+    filename = f"applications_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    file_path = os.path.join(export_dir, filename)
+
+    applications = Application.query.join(Placement_drive).filter(
+        Placement_drive.company_id == company.id
+    ).order_by(Application.applied_at.desc()).all()
+
+    with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "application_id",
+            "student_name",
+            "student_email",
+            "drive_title",
+            "status",
+            "applied_at",
+            "interview_schedule",
+            "offer_at",
+            "placed_at",
+        ])
+        for app in applications:
+            student = Student.query.get(app.student_id)
+            drive = Placement_drive.query.get(app.drive_id)
+            writer.writerow([
+                app.id,
+                student.full_name if student else "",
+                student.email if student else "",
+                drive.job_title if drive else "",
+                app.status,
+                app.applied_at.isoformat() if app.applied_at else "",
+                app.interview_schedule.isoformat() if app.interview_schedule else "",
+                app.offer_at.isoformat() if app.offer_at else "",
+                app.placed_at.isoformat() if app.placed_at else "",
+            ])
+
+    return file_path
+
+
 @celery.task(name="tasks.send_email_notification")
 def send_email_notification(to_email, subject, body):
     return send_email(to_email, subject, body)
@@ -68,173 +155,6 @@ def send_interview_reminders():
         app.interview_reminder_sent_at = now
 
     db.session.commit()
-
-
-@celery.task(name="tasks.export_student_applications")
-def export_student_applications(job_id):
-    job = ExportJob.query.get(job_id)
-    if not job or job.requester_role != "student":
-        return
-
-    job.status = "processing"
-    db.session.commit()
-
-    student = Student.query.get(job.requester_id)
-    if not student:
-        job.status = "failed"
-        job.error = "Student not found"
-        db.session.commit()
-        return
-
-    try:
-        export_dir = os.path.join(_BASE_DIR, "exports", f"student_{student.id}")
-        os.makedirs(export_dir, exist_ok=True)
-        filename = f"applications_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
-        file_path = os.path.join(export_dir, filename)
-
-        applications = Application.query.filter_by(student_id=student.id).order_by(
-            Application.applied_at.desc()
-        ).all()
-
-        with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow([
-                "application_id",
-                "job_title",
-                "company_name",
-                "status",
-                "applied_at",
-                "interview_schedule",
-                "offer_at",
-                "placed_at",
-            ])
-            for app in applications:
-                drive = Placement_drive.query.get(app.drive_id)
-                writer.writerow([
-                    app.id,
-                    drive.job_title if drive else "",
-                    drive.company.company_name if drive else "",
-                    app.status,
-                    app.applied_at.isoformat() if app.applied_at else "",
-                    app.interview_schedule.isoformat() if app.interview_schedule else "",
-                    app.offer_at.isoformat() if app.offer_at else "",
-                    app.placed_at.isoformat() if app.placed_at else "",
-                ])
-
-        job.status = "completed"
-        job.file_path = file_path
-        job.completed_at = datetime.utcnow()
-        db.session.commit()
-
-        send_gchat(GCHAT_URL, f"Export Ready: student applications export completed. File: {file_path}")
-        _queue_email_notification(
-            student.email,
-            "Your student export is ready",
-            (
-                "Your student applications export has completed successfully.\n\n"
-                f"Job ID: {job.id}\n"
-                f"Status: {job.status}\n"
-                f"File: {file_path}\n"
-            ),
-        )
-    except Exception as exc:
-        job.status = "failed"
-        job.error = str(exc)
-        db.session.commit()
-        _queue_email_notification(
-            student.email,
-            "Your student export failed",
-            (
-                "Your student applications export failed.\n\n"
-                f"Job ID: {job.id}\n"
-                f"Error: {job.error}\n"
-            ),
-        )
-
-
-@celery.task(name="tasks.export_company_applications")
-def export_company_applications(job_id):
-    job = ExportJob.query.get(job_id)
-    if not job or job.requester_role != "company":
-        return
-
-    job.status = "processing"
-    db.session.commit()
-
-    company = Company.query.get(job.requester_id)
-    if not company:
-        job.status = "failed"
-        job.error = "Company not found"
-        db.session.commit()
-        return
-
-    try:
-        export_dir = os.path.join(_BASE_DIR, "exports", f"company_{company.id}")
-        os.makedirs(export_dir, exist_ok=True)
-        filename = f"applications_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
-        file_path = os.path.join(export_dir, filename)
-
-        applications = Application.query.join(Placement_drive).filter(
-            Placement_drive.company_id == company.id
-        ).order_by(Application.applied_at.desc()).all()
-
-        with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow([
-                "application_id",
-                "student_name",
-                "student_email",
-                "drive_title",
-                "status",
-                "applied_at",
-                "interview_schedule",
-                "offer_at",
-                "placed_at",
-            ])
-            for app in applications:
-                student = Student.query.get(app.student_id)
-                drive = Placement_drive.query.get(app.drive_id)
-                writer.writerow([
-                    app.id,
-                    student.full_name if student else "",
-                    student.email if student else "",
-                    drive.job_title if drive else "",
-                    app.status,
-                    app.applied_at.isoformat() if app.applied_at else "",
-                    app.interview_schedule.isoformat() if app.interview_schedule else "",
-                    app.offer_at.isoformat() if app.offer_at else "",
-                    app.placed_at.isoformat() if app.placed_at else "",
-                ])
-
-        job.status = "completed"
-        job.file_path = file_path
-        job.completed_at = datetime.utcnow()
-        db.session.commit()
-
-        send_gchat(GCHAT_URL, f"Export Ready: company applications export completed. File: {file_path}")
-        _queue_email_notification(
-            company.email,
-            "Your company export is ready",
-            (
-                "Your company applications export has completed successfully.\n\n"
-                f"Job ID: {job.id}\n"
-                f"Status: {job.status}\n"
-                f"File: {file_path}\n"
-            ),
-        )
-    except Exception as exc:
-        job.status = "failed"
-        job.error = str(exc)
-        db.session.commit()
-        _queue_email_notification(
-            company.email,
-            "Your company export failed",
-            (
-                "Your company applications export failed.\n\n"
-                f"Job ID: {job.id}\n"
-                f"Error: {job.error}\n"
-            ),
-        )
 
 
 def _render_report_html(company, month, year, stats, by_drive):
@@ -352,29 +272,6 @@ def generate_monthly_placement_reports():
     companies = Company.query.filter_by(status="approved", is_blacklisted=False).all()
 
     for company in companies:
-        existing = PlacementReport.query.filter_by(
-            company_id=company.id,
-            report_month=target_date.month,
-            report_year=target_date.year,
-        ).first()
-
-        if existing and existing.status == "completed":
-            continue
-
-        report = existing or PlacementReport(
-            company_id=company.id,
-            report_month=target_date.month,
-            report_year=target_date.year,
-            status="processing",
-        )
-        if not existing:
-            db.session.add(report)
-        else:
-            report.status = "processing"
-            report.error = None
-
-        db.session.commit()
-
         try:
             report_dir = os.path.join(
                 _BASE_DIR, "reports", f"company_{company.id}", f"{target_date.year}_{target_date.month:02d}"
@@ -382,6 +279,10 @@ def generate_monthly_placement_reports():
             os.makedirs(report_dir, exist_ok=True)
             html_path = os.path.join(report_dir, "report.html")
             pdf_path = os.path.join(report_dir, "report.pdf")
+
+            # Report file already exists for this month; skip regenerating.
+            if os.path.exists(html_path) or os.path.exists(pdf_path):
+                continue
 
             # Build report data
             drives = Placement_drive.query.filter_by(company_id=company.id).all()
@@ -417,13 +318,7 @@ def generate_monthly_placement_reports():
             with open(html_path, "w", encoding="utf-8") as handle:
                 handle.write(html)
 
-            pdf_generated = _render_report_pdf(pdf_path, company, target_date.month, target_date.year, stats, by_drive)
-
-            report.html_path = html_path
-            report.pdf_path = pdf_generated
-            report.status = "completed"
-            report.completed_at = datetime.utcnow()
-            db.session.commit()
+            _render_report_pdf(pdf_path, company, target_date.month, target_date.year, stats, by_drive)
 
             send_gchat(GCHAT_URL,
                 f"📈 *Monthly Placement Report - {company.company_name}*\n"
@@ -450,9 +345,10 @@ def generate_monthly_placement_reports():
                 f"  Rejected: {stats['rejected']}\n"
             )
         except Exception as exc:
-            report.status = "failed"
-            report.error = str(exc)
-            db.session.commit()
+            send_gchat(
+                GCHAT_URL,
+                f"Monthly report generation failed for {company.company_name}: {str(exc)}",
+            )
 
 
 @celery.task(name="tasks.send_deadline_reminders")
