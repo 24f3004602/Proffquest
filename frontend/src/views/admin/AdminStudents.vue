@@ -120,8 +120,9 @@ export default {
     async loadStudents() {
       try {
         const res = await api.get('/admin/student')
-        this.students = res.data
-        this.filteredStudents = res.data
+        const list = Array.isArray(res.data) ? res.data : (res.data?.students || [])
+        this.students = list
+        this.searchStudents()
       } catch (error) {
         console.error('Error loading students:', error)
       }
@@ -136,17 +137,19 @@ export default {
         }
       }
     },
-    async searchStudents() {
-      if (this.searchQuery.trim() === '') {
-        this.filteredStudents = this.students
-      } else {
-        try {
-          const res = await api.get(`/admin/search_students?q=${encodeURIComponent(this.searchQuery)}`)
-          this.filteredStudents = res.data
-        } catch (error) {
-          console.error('Error searching students:', error)
-        }
+    searchStudents() {
+      const query = this.searchQuery.trim().toLowerCase()
+      if (!query) {
+        this.filteredStudents = [...this.students]
+        return
       }
+
+      this.filteredStudents = this.students.filter(student => {
+        const name = (student.full_name || '').toLowerCase()
+        const roll = (student.roll_number || '').toLowerCase()
+        const email = (student.email || '').toLowerCase()
+        return name.includes(query) || roll.includes(query) || email.includes(query)
+      })
     },
     async blacklistStudent(studentId) {
       if (confirm('Are you sure you want to blacklist this student?')) {

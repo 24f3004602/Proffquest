@@ -65,23 +65,26 @@ export default {
     async loadCompanies() {
       try {
         const res = await api.get('/admin/companies')
-        this.companies = res.data
-        this.filteredCompanies = res.data
+        const list = Array.isArray(res.data) ? res.data : (res.data?.companies || [])
+        this.companies = list
+        this.searchCompanies()
       } catch (error) {
         console.error('Error loading companies:', error)
       }
     },
-    async searchCompanies() {
-      if (this.searchQuery.trim() === '') {
-        this.filteredCompanies = this.companies
-      } else {
-        try {
-          const res = await api.get(`/admin/search_companies?q=${encodeURIComponent(this.searchQuery)}`)
-          this.filteredCompanies = res.data
-        } catch (error) {
-          console.error('Error searching companies:', error)
-        }
+    searchCompanies() {
+      const query = this.searchQuery.trim().toLowerCase()
+      if (!query) {
+        this.filteredCompanies = [...this.companies]
+        return
       }
+
+      this.filteredCompanies = this.companies.filter(company => {
+        const name = (company.company_name || '').toLowerCase()
+        const email = (company.email || '').toLowerCase()
+        const description = (company.description || '').toLowerCase()
+        return name.includes(query) || email.includes(query) || description.includes(query)
+      })
     },
     async approveCompany(companyId) {
       try {
