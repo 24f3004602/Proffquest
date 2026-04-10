@@ -4,6 +4,7 @@ from models import *
 from flask_jwt_extended import create_access_token
 from werkzeug.security import check_password_hash, generate_password_hash
 import json
+from utils.cache import cache
 
 
 class Login(Resource):
@@ -71,6 +72,7 @@ class StudentRegister(Resource):
             )
             db.session.add(new_student)
             db.session.commit()
+            cache.clear()
             return {'message':'Student registered successfully'},201
         except Exception as e:
             db.session.rollback()
@@ -106,6 +108,7 @@ class CompanyRegister(Resource):
             )
             db.session.add(new_company)
             db.session.commit()
+            cache.clear()
             return {'message':'Company registered,Await admin approval'},201
         except Exception as e:
             db.session.rollback()
