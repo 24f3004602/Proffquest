@@ -40,7 +40,6 @@ def _serialize_student(student):
 
 class AdminDashboardStats(Resource):
     @role_required('admin')
-    @cache.cached(timeout=300)
     def get(self):
         return {
             'Total_Students':Student.query.count(),

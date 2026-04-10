@@ -12,7 +12,6 @@ import json
 
 class CompanyDashboard(Resource):
     @role_required('company')
-    @cache.cached(timeout=300)
     def get(self):
         identity = json.loads(get_jwt_identity())
         company_id = identity['id']

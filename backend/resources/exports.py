@@ -1,16 +1,104 @@
 import json
 import os
+import csv
 from datetime import datetime
 
 from flask import send_file
 from flask_jwt_extended import get_jwt_identity
 from flask_restful import Resource
 
-from tasks import generate_company_applications_export, generate_student_applications_export
+from models import Application, Company, Placement_drive, Student
 from utils.decorators import role_required
 
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def generate_student_applications_export(student_id):
+    student = Student.query.get(student_id)
+    if not student:
+        raise ValueError("Student not found")
+
+    export_dir = os.path.join(_BASE_DIR, "exports", f"student_{student.id}")
+    os.makedirs(export_dir, exist_ok=True)
+    filename = f"applications_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    file_path = os.path.join(export_dir, filename)
+
+    applications = Application.query.filter_by(student_id=student.id).order_by(
+        Application.applied_at.desc()
+    ).all()
+
+    with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "application_id",
+            "job_title",
+            "company_name",
+            "status",
+            "applied_at",
+            "interview_schedule",
+            "offer_at",
+            "placed_at",
+        ])
+        for app in applications:
+            drive = Placement_drive.query.get(app.drive_id)
+            writer.writerow([
+                app.id,
+                drive.job_title if drive else "",
+                drive.company.company_name if drive else "",
+                app.status,
+                app.applied_at.isoformat() if app.applied_at else "",
+                app.interview_schedule.isoformat() if app.interview_schedule else "",
+                app.offer_at.isoformat() if app.offer_at else "",
+                app.placed_at.isoformat() if app.placed_at else "",
+            ])
+
+    return file_path
+
+
+def generate_company_applications_export(company_id):
+    company = Company.query.get(company_id)
+    if not company:
+        raise ValueError("Company not found")
+
+    export_dir = os.path.join(_BASE_DIR, "exports", f"company_{company.id}")
+    os.makedirs(export_dir, exist_ok=True)
+    filename = f"applications_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    file_path = os.path.join(export_dir, filename)
+
+    applications = Application.query.join(Placement_drive).filter(
+        Placement_drive.company_id == company.id
+    ).order_by(Application.applied_at.desc()).all()
+
+    with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            "application_id",
+            "student_name",
+            "student_email",
+            "drive_title",
+            "status",
+            "applied_at",
+            "interview_schedule",
+            "offer_at",
+            "placed_at",
+        ])
+        for app in applications:
+            student = Student.query.get(app.student_id)
+            drive = Placement_drive.query.get(app.drive_id)
+            writer.writerow([
+                app.id,
+                student.full_name if student else "",
+                student.email if student else "",
+                drive.job_title if drive else "",
+                app.status,
+                app.applied_at.isoformat() if app.applied_at else "",
+                app.interview_schedule.isoformat() if app.interview_schedule else "",
+                app.offer_at.isoformat() if app.offer_at else "",
+                app.placed_at.isoformat() if app.placed_at else "",
+            ])
+
+    return file_path
 
 
 def _company_report_folder(company_id):

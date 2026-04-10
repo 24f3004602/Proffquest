@@ -36,7 +36,6 @@ def _is_profile_complete(student):
 
 class StudentDashboard(Resource):
     @role_required('student')
-    @cache.cached(timeout=300)
     def get(self):
         identity = json.loads(get_jwt_identity())
         student_id = identity['id']

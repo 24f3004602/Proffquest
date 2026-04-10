@@ -35,8 +35,8 @@
             <td class="actions">
               <button v-if="company.status === 'pending'" @click="approveCompany(company.id)" class="action-btn btn-approve">Approve</button>
               <button v-if="company.status === 'pending'" @click="rejectCompany(company.id)" class="action-btn btn-reject">Reject</button>
-              <button v-if="!company.is_blacklisted" @click="blacklistCompany(company.id)" class="action-btn btn-blacklist">Blacklist</button>
-              <button v-else @click="activateCompany(company.id)" class="action-btn btn-activate">Activate</button>
+              <button v-if="company.status !== 'rejected' && !company.is_blacklisted" @click="blacklistCompany(company.id)" class="action-btn btn-blacklist">Blacklist</button>
+              <button v-else-if="company.status !== 'rejected'" @click="activateCompany(company.id)" class="action-btn btn-activate">Activate</button>
               <button @click="removeCompany(company.id)" class="action-btn">Remove</button>
             </td>
           </tr>
