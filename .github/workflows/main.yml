@@ -102,9 +102,21 @@ jobs:
         run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_WORKER }}"
 
       - name: Trigger Celery beat deploy (optional)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_BEAT != '' }}
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BEAT }}"
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_BEAT }}
+        run: |
+          if [ -n "$HOOK_URL" ]; then
+            curl -fsS -X POST "$HOOK_URL"
+          else
+            echo "RENDER_DEPLOY_HOOK_BEAT secret not set - skipping."
+          fi
 
       - name: Trigger frontend static site deploy (optional)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND != '' }}
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}"
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+        run: |
+          if [ -n "$HOOK_URL" ]; then
+            curl -fsS -X POST "$HOOK_URL"
+          else
+            echo "RENDER_DEPLOY_HOOK_FRONTEND secret not set - skipping."
+          fi
