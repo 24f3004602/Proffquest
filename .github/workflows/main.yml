@@ -1,27 +1,49 @@
-name: ProffQuest CI
+name: Build & Deploy to Render
+
+# -----------------------------------------------------------------------------
+# Runs on every push to main: builds + sanity-checks the backend and frontend,
+# then (only if that succeeds) triggers Render deploys via Deploy Hooks.
+#
+# Setup required before this workflow will do anything:
+#
+# 1. In Render, for each service you want this workflow to redeploy, go to
+#    Service -> Settings -> Deploy Hook and copy the URL.
+#      - Web Service (Flask backend / API)        -> RENDER_DEPLOY_HOOK_WEB
+#      - Background Worker (celery worker)        -> RENDER_DEPLOY_HOOK_WORKER
+#    Optional, only add these if they apply to your setup:
+#      - A separate "celery beat" worker service  -> RENDER_DEPLOY_HOOK_BEAT
+#      - Frontend as a Render Static Site          -> RENDER_DEPLOY_HOOK_FRONTEND
+#    Render's managed Redis instance does NOT need a deploy hook - it isn't
+#    built from your repo, so there's nothing for this workflow to redeploy.
+#
+# 2. Add each hook URL as a GitHub Actions secret:
+#    Repo -> Settings -> Secrets and variables -> Actions -> New repository secret.
+#
+# 3. On each Render service, turn OFF "Auto-Deploy" (Settings -> Build & Deploy).
+#    Otherwise Render will deploy on every push by itself, racing with this
+#    workflow and skipping the build-check step below entirely.
+# -----------------------------------------------------------------------------
 
 on:
   push:
     branches:
       - main
-      - master
-      - develop
-  pull_request:
-    branches:
-      - main
-      - master
-      - develop
+  workflow_dispatch: {} # lets you trigger a deploy manually from the Actions tab
+
+concurrency:
+  group: deploy-render-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Build & Verify
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       # -------------------------
-      # Python Setup
+      # Backend (Flask)
       # -------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,7 +57,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Check Flask Application
+      - name: Verify Flask App Imports
         working-directory: backend
         env:
           JWT_SECRET_KEY: testing-secret
@@ -50,7 +72,7 @@ jobs:
           python -c "import app"
 
       # -------------------------
-      # Node Setup
+      # Frontend (Vue + Vite)
       # -------------------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -66,3 +88,23 @@ jobs:
       - name: Build Frontend
         working-directory: frontend
         run: npm run build
+
+  deploy:
+    name: Deploy to Render
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger backend web service deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_WEB }}"
+
+      - name: Trigger Celery worker deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_WORKER }}"
+
+      - name: Trigger Celery beat deploy (optional)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_BEAT != '' }}
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_BEAT }}"
+
+      - name: Trigger frontend static site deploy (optional)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND != '' }}
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}"
