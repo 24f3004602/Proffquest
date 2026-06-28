@@ -96,10 +96,24 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Trigger backend web service deploy
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_WEB }}"
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_WEB }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_WEB secret is not set. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK_URL"
 
       - name: Trigger Celery worker deploy
-        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_WORKER }}"
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_WORKER }}
+        run: |
+          if [ -z "$HOOK_URL" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_WORKER secret is not set. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          curl -fsS -X POST "$HOOK_URL"
 
       - name: Trigger Celery beat deploy (optional)
         env:
